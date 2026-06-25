@@ -9,26 +9,27 @@ function fmtDoc(v) {
   return Math.round(v) + 'd';
 }
 function docStatus(doc) {
-  if (doc === null || !isFinite(doc)) return { label: '—', color: '#777', bg: 'rgba(255,255,255,0.05)' };
-  if (doc <= 0)  return { label: 'STOCKOUT',  color: '#ff2d55', bg: 'rgba(255,45,85,0.18)' };
-  if (doc <= 15) return { label: fmtDoc(doc), color: '#ff6b00', bg: 'rgba(255,107,0,0.15)' };
-  if (doc <= 30) return { label: fmtDoc(doc), color: '#f5c518', bg: 'rgba(245,197,24,0.13)' };
-  if (doc <= 60) return { label: fmtDoc(doc), color: '#00e676', bg: 'rgba(0,230,118,0.12)' };
-  return           { label: fmtDoc(doc), color: '#7c5cfc', bg: 'rgba(124,92,252,0.13)' };
+  if (doc === null || !isFinite(doc)) return { label: '—', color: '#999', bg: '#f0f0f0' };
+  if (doc <= 0)  return { label: 'STOCKOUT',  color: '#c0001a', bg: '#ffe0e4' };
+  if (doc <= 15) return { label: fmtDoc(doc), color: '#b94400', bg: '#ffe8d6' };
+  if (doc <= 30) return { label: fmtDoc(doc), color: '#7a6000', bg: '#fff5c0' };
+  if (doc <= 60) return { label: fmtDoc(doc), color: '#1a6e3c', bg: '#d4f5e2' };
+  return           { label: fmtDoc(doc), color: '#4a2fa0', bg: '#ece8ff' };
 }
 
 function Card({ label, value, sub, accent }) {
   return (
     <div style={{
       flex: 1, minWidth: 120,
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
+      background: '#fff',
+      border: '1px solid #e8e8e8',
       borderLeft: `3px solid ${accent}`,
       borderRadius: 8, padding: '10px 14px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     }}>
-      <div style={{ color: '#666', fontSize: 9, fontFamily: "'Space Mono',monospace", letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
-      <div style={{ color: '#f0f0f0', fontSize: 20, fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: '0.04em', lineHeight: 1.1 }}>{value}</div>
-      {sub && <div style={{ color: '#444', fontSize: 10, marginTop: 3, fontFamily: "'Space Mono',monospace" }}>{sub}</div>}
+      <div style={{ color: '#999', fontSize: 9, fontFamily: "'Space Mono',monospace", letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+      <div style={{ color: '#111', fontSize: 20, fontWeight: 700, fontFamily: "'Bebas Neue',sans-serif", letterSpacing: '0.04em', lineHeight: 1.1 }}>{value}</div>
+      {sub && <div style={{ color: '#bbb', fontSize: 10, marginTop: 3, fontFamily: "'Space Mono',monospace" }}>{sub}</div>}
     </div>
   );
 }
@@ -70,8 +71,7 @@ export default function App() {
   const totalSOH    = totalMRP + totalSOR + totalB2C;
   const totalMTD    = skus.reduce((s, r) => s + r.mtd, 0);
   const totalAvg    = skus.reduce((s, r) => s + r.avg, 0);
-  const validDocs   = skus.filter(r => r.doc !== null && isFinite(r.doc));
-  const avgDoc      = validDocs.length ? validDocs.reduce((s, r) => s + r.doc, 0) / validDocs.length : null;
+  const avgDoc      = totalAvg > 0 ? (totalSOH / totalAvg) * 30 : null;
   const criticalCnt = skus.filter(r => r.doc !== null && r.doc <= 30).length;
 
   const filtered = [...skus]
@@ -126,13 +126,13 @@ export default function App() {
   const TH = ({ label, col, right }) => (
     <th onClick={() => toggleSort(col)} style={{
       padding: '8px 12px', textAlign: right ? 'right' : 'left',
-      color: sortCol === col ? '#ff2d55' : '#aaa',
+      color: sortCol === col ? '#e0001a' : '#555',
       cursor: 'pointer', userSelect: 'none',
       fontFamily: "'Space Mono',monospace", fontSize: 10,
       letterSpacing: '0.08em', textTransform: 'uppercase',
       whiteSpace: 'nowrap',
-      borderBottom: '1px solid rgba(255,255,255,0.08)',
-      background: '#111',
+      borderBottom: '2px solid #e8e8e8',
+      background: '#fafafa',
       position: 'sticky', top: 0, zIndex: 1,
     }}>
       {label}{sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
@@ -140,65 +140,64 @@ export default function App() {
   );
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, color: '#ff2d55', letterSpacing: '0.1em' }}>VILLAIN</div>
-      <div style={{ color: '#444', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>LOADING INVENTORY...</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12, background: '#f5f5f5' }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, color: '#e0001a', letterSpacing: '0.1em' }}>VILLAIN</div>
+      <div style={{ color: '#aaa', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>LOADING INVENTORY...</div>
     </div>
   );
 
   if (error) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12, padding: 32 }}>
-      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, color: '#ff2d55', letterSpacing: '0.1em' }}>VILLAIN</div>
-      <div style={{ color: '#ff2d55', fontSize: 12, background: 'rgba(255,45,85,0.1)', padding: '10px 18px', borderRadius: 8, maxWidth: 500, textAlign: 'center', fontFamily: "'Space Mono',monospace" }}>{error}</div>
-      <button onClick={fetchData} style={{ background: '#ff2d55', border: 'none', borderRadius: 8, padding: '8px 20px', color: '#fff', fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, cursor: 'pointer' }}>RETRY</button>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: 12, padding: 32, background: '#f5f5f5' }}>
+      <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, color: '#e0001a', letterSpacing: '0.1em' }}>VILLAIN</div>
+      <div style={{ color: '#c0001a', fontSize: 12, background: '#ffe0e4', padding: '10px 18px', borderRadius: 8, maxWidth: 500, textAlign: 'center', fontFamily: "'Space Mono',monospace" }}>{error}</div>
+      <button onClick={fetchData} style={{ background: '#e0001a', border: 'none', borderRadius: 8, padding: '8px 20px', color: '#fff', fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, cursor: 'pointer' }}>RETRY</button>
     </div>
   );
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f5f5f7' }}>
 
       {/* Header */}
-      <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div style={{ padding: '10px 20px', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#ff2d55', letterSpacing: '0.1em' }}>VILLAIN</span>
-          <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 9, color: '#333', letterSpacing: '0.18em' }}>INVENTORY REVIEW</span>
+          <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 28, color: '#e0001a', letterSpacing: '0.1em' }}>VILLAIN</span>
+          <span style={{ fontFamily: "'Space Mono',monospace", fontSize: 9, color: '#bbb', letterSpacing: '0.18em' }}>INVENTORY REVIEW</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {criticalCnt > 0 && (
-            <span style={{ background: 'rgba(255,45,85,0.15)', border: '1px solid rgba(255,45,85,0.3)', color: '#ff2d55', fontFamily: "'Space Mono',monospace", fontSize: 10, padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>
+            <span style={{ background: '#ffe0e4', border: '1px solid #ffb3bb', color: '#c0001a', fontFamily: "'Space Mono',monospace", fontSize: 10, padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>
               ⚠ {criticalCnt} CRITICAL
             </span>
           )}
-          {lastUpdated && <span style={{ color: '#333', fontFamily: "'Space Mono',monospace", fontSize: 9 }}>updated {lastUpdated}</span>}
-          <button onClick={fetchData} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '4px 12px', color: '#555', fontSize: 10, cursor: 'pointer', fontFamily: "'Space Mono',monospace" }}>↻ REFRESH</button>
+          {lastUpdated && <span style={{ color: '#bbb', fontFamily: "'Space Mono',monospace", fontSize: 9 }}>updated {lastUpdated}</span>}
+          <button onClick={fetchData} style={{ background: '#f5f5f7', border: '1px solid #e0e0e0', borderRadius: 6, padding: '4px 12px', color: '#888', fontSize: 10, cursor: 'pointer', fontFamily: "'Space Mono',monospace" }}>↻ REFRESH</button>
         </div>
       </div>
 
       {/* Cards */}
       <div style={{ display: 'flex', gap: 10, padding: '10px 20px', flexShrink: 0, flexWrap: 'wrap' }}>
-        <Card label="Total SOH"         value={fmt(totalSOH)}             sub={`MRP: ${fmt(totalMRP)} · SOR: ${fmt(totalSOR)} · B2C: ${fmt(totalB2C)}`} accent="#ff2d55" />
-        <Card label="Avg DOC"           value={fmtDoc(avgDoc)}            sub={`across ${skus.length} SKUs`} accent="#f5c518" />
-        <Card label="Jun'26 MTD"        value={fmt(totalMTD)}             sub="month to date" accent="#00e676" />
-        <Card label="Avg Monthly Sales" value={fmt(Math.round(totalAvg))} sub="Apr + May avg" accent="#7c5cfc" />
+        <Card label="Total SOH"         value={fmt(totalSOH)}             sub={`MRP: ${fmt(totalMRP)} · SOR: ${fmt(totalSOR)} · B2C: ${fmt(totalB2C)}`} accent="#e0001a" />
+        <Card label="Avg DOC"           value={fmtDoc(avgDoc)}            sub={`across ${skus.length} SKUs`} accent="#f5a623" />
+        <Card label="Jun'26 MTD"        value={fmt(totalMTD)}             sub="month to date" accent="#27ae60" />
+        <Card label="Avg Monthly Sales" value={fmt(Math.round(totalAvg))} sub="Apr + May avg" accent="#6c47ff" />
       </div>
 
-      {/* Main: table + chat — fills remaining height */}
-      <div style={{ display: 'flex', flex: 1, padding: '0 20px 16px', gap: 16, minHeight: 0 }}>
+      {/* Main: table + chat */}
+      <div style={{ display: 'flex', flex: 1, padding: '0 20px 16px', gap: 14, minHeight: 0 }}>
 
-        {/* Table panel */}
+        {/* Table */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexShrink: 0 }}>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search style..."
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '6px 12px', color: '#e8e8e8', fontSize: 12, outline: 'none', fontFamily: 'inherit', width: 200 }}
+              style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 6, padding: '6px 12px', color: '#333', fontSize: 12, outline: 'none', fontFamily: 'inherit', width: 200 }}
             />
-            <span style={{ color: '#333', fontFamily: "'Space Mono',monospace", fontSize: 10 }}>{filtered.length} of {skus.length} SKUs</span>
+            <span style={{ color: '#bbb', fontFamily: "'Space Mono',monospace", fontSize: 10 }}>{filtered.length} of {skus.length} SKUs</span>
           </div>
 
-          {/* Scrollable table */}
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.015)' }}>
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', borderRadius: 8, border: '1px solid #e0e0e0', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr>
@@ -219,19 +218,19 @@ export default function App() {
                   const st = docStatus(r.doc);
                   return (
                     <tr key={r.style}
-                      style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,45,85,0.05)'}
-                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
+                      style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f0f0f0' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#fff5f5'}
+                      onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? '#fff' : '#fafafa'}
                     >
-                      <td style={{ padding: '8px 12px', color: '#e8e8e8', fontWeight: 500, whiteSpace: 'nowrap' }}>{r.style}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.mrp)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.sor)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.b2c)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#e8e8e8', fontFamily: "'Space Mono',monospace", fontSize: 11, fontWeight: 600 }}>{fmt(r.totalSOH)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.apr)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.may)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.mtd)}</td>
-                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#888', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(Math.round(r.avg))}</td>
+                      <td style={{ padding: '8px 12px', color: '#111', fontWeight: 500, whiteSpace: 'nowrap' }}>{r.style}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.mrp)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.sor)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.b2c)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#111', fontFamily: "'Space Mono',monospace", fontSize: 11, fontWeight: 600 }}>{fmt(r.totalSOH)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.apr)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.may)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(r.mtd)}</td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontFamily: "'Space Mono',monospace", fontSize: 11 }}>{fmt(Math.round(r.avg))}</td>
                       <td style={{ padding: '8px 12px', textAlign: 'right' }}>
                         <span style={{ background: st.bg, color: st.color, padding: '2px 8px', borderRadius: 5, fontFamily: "'Space Mono',monospace", fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>
                           {st.label}
@@ -246,51 +245,51 @@ export default function App() {
 
           {/* Legend */}
           <div style={{ display: 'flex', gap: 14, marginTop: 8, flexWrap: 'wrap', flexShrink: 0 }}>
-            {[['STOCKOUT', '#ff2d55'], ['CRITICAL ≤15d', '#ff6b00'], ['LOW ≤30d', '#f5c518'], ['HEALTHY ≤60d', '#00e676'], ['OVERSTOCK >60d', '#7c5cfc']].map(([l, c]) => (
-              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: "'Space Mono',monospace", fontSize: 9, color: '#444' }}>
+            {[['STOCKOUT', '#c0001a'], ['CRITICAL ≤15d', '#b94400'], ['LOW ≤30d', '#7a6000'], ['HEALTHY ≤60d', '#1a6e3c'], ['OVERSTOCK >60d', '#4a2fa0']].map(([l, c]) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: "'Space Mono',monospace", fontSize: 9, color: '#aaa' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />{l}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Chat panel — full height, sticky */}
-        <div style={{ width: 280, flexShrink: 0, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontFamily: "'Space Mono',monospace", fontSize: 9, color: '#ff2d55', letterSpacing: '0.14em', flexShrink: 0 }}>
+        {/* Chat panel */}
+        <div style={{ width: 280, flexShrink: 0, background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8, display: 'flex', flexDirection: 'column', minHeight: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid #f0f0f0', fontFamily: "'Space Mono',monospace", fontSize: 9, color: '#e0001a', letterSpacing: '0.14em', flexShrink: 0 }}>
             ◈ AI ANALYST
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {chat.length === 0 && (
-              <div style={{ color: '#2a2a2a', fontSize: 11, fontFamily: "'Space Mono',monospace", lineHeight: 1.7 }}>
+              <div style={{ color: '#ccc', fontSize: 11, fontFamily: "'Space Mono',monospace", lineHeight: 1.7 }}>
                 Ask anything about Villain inventory...<br /><br />
-                <span style={{ color: '#222' }}>"Which SKUs are critical?" · "What needs replenishment?"</span>
+                <span style={{ color: '#ddd' }}>"Which SKUs are critical?" · "What needs replenishment?"</span>
               </div>
             )}
             {chat.map((m, i) => (
               <div key={i} style={{
                 alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
                 maxWidth: '92%',
-                background: m.role === 'user' ? 'rgba(255,45,85,0.14)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${m.role === 'user' ? 'rgba(255,45,85,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                background: m.role === 'user' ? '#ffe0e4' : '#f5f5f7',
+                border: `1px solid ${m.role === 'user' ? '#ffb3bb' : '#e8e8e8'}`,
                 borderRadius: m.role === 'user' ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
-                padding: '8px 10px', fontSize: 12, lineHeight: 1.6, color: '#ccc',
+                padding: '8px 10px', fontSize: 12, lineHeight: 1.6,
+                color: m.role === 'user' ? '#c0001a' : '#333',
                 whiteSpace: 'pre-wrap'
               }}>{m.text}</div>
             ))}
-            {chatLoading && <div style={{ alignSelf: 'flex-start', color: '#ff2d55', fontFamily: "'Space Mono',monospace", fontSize: 10 }}>analyzing...</div>}
+            {chatLoading && <div style={{ alignSelf: 'flex-start', color: '#e0001a', fontFamily: "'Space Mono',monospace", fontSize: 10 }}>analyzing...</div>}
             <div ref={chatEndRef} />
           </div>
-          {/* Input always visible at bottom */}
-          <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 6, flexShrink: 0 }}>
+          <div style={{ padding: '8px 10px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 6, flexShrink: 0 }}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendChat()}
               placeholder="Ask the analyst..."
-              style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '7px 10px', color: '#e8e8e8', fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
+              style={{ flex: 1, background: '#f5f5f7', border: '1px solid #e0e0e0', borderRadius: 6, padding: '7px 10px', color: '#333', fontSize: 12, outline: 'none', fontFamily: 'inherit' }}
             />
-            <button onClick={toggleVoice} style={{ background: listening ? 'rgba(255,45,85,0.25)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '7px 8px', color: listening ? '#ff2d55' : '#555', cursor: 'pointer', fontSize: 12 }}>🎙</button>
-            <button onClick={sendChat} disabled={chatLoading || !input.trim()} style={{ background: '#ff2d55', border: 'none', borderRadius: 6, padding: '7px 12px', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 700, opacity: chatLoading || !input.trim() ? 0.4 : 1 }}>↑</button>
+            <button onClick={toggleVoice} style={{ background: listening ? '#ffe0e4' : '#f5f5f7', border: '1px solid #e0e0e0', borderRadius: 6, padding: '7px 8px', color: listening ? '#e0001a' : '#aaa', cursor: 'pointer', fontSize: 12 }}>🎙</button>
+            <button onClick={sendChat} disabled={chatLoading || !input.trim()} style={{ background: '#e0001a', border: 'none', borderRadius: 6, padding: '7px 12px', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 700, opacity: chatLoading || !input.trim() ? 0.4 : 1 }}>↑</button>
           </div>
         </div>
       </div>
