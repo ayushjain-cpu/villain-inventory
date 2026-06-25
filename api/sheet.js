@@ -12,8 +12,6 @@ export default async function handler(req, res) {
     const csvText = await response.text();
 
     const lines = csvText.trim().split('\n');
-
-    // Headers are on row 4 (index 3), data starts row 5 (index 4)
     const headers = parseCSVLine(lines[3]);
 
     if (req.query.debug) {
@@ -27,32 +25,22 @@ export default async function handler(req, res) {
       return obj;
     });
 
-    const findCol = (row, ...keywords) => {
-      const key = Object.keys(row).find(k =>
-        keywords.every(kw => k.toLowerCase().includes(kw.toLowerCase()))
-      );
-      return key ? row[key] : '0';
-    };
-
+    // Exact column names from the sheet
     const skus = rows
-      .filter(r => {
-        const sk = Object.keys(r).find(k => k.trim().toLowerCase() === 'style');
-        return sk && r[sk] && r[sk].trim() !== '';
-      })
+      .filter(r => r['Style'] && r['Style'].trim() !== '')
       .map(r => {
-        const sk = Object.keys(r).find(k => k.trim().toLowerCase() === 'style');
-        const apr = n(findCol(r, 'apr'));
-        const may = n(findCol(r, 'may'));
+        const apr = n(r["Apr'26 Sales"]);
+        const may = n(r["May'26 Sales"]);
         const avg = (apr + may) / 2;
-        const mrp = n(findCol(r, 'mrp'));
-        const sor = n(findCol(r, 'sor'));
-        const b2c = n(findCol(r, 'b2c'));
+        const mrp = n(r['New MRP WH SOH']);
+        const sor = n(r['SOR SOH']);
+        const b2c = n(r['Total B2C WH SOH']);
         const totalSOH = mrp + sor + b2c;
         const doc = avg > 0 ? (totalSOH / avg) * 30 : null;
         return {
-          style: r[sk].trim(),
+          style: r['Style'].trim(),
           apr, may,
-          mtd: n(findCol(r, 'mtd')),
+          mtd: n(r["Jun'26 MTD"]),
           mrp, sor, b2c, totalSOH, avg, doc
         };
       });
