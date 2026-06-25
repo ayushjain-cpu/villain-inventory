@@ -16,7 +16,6 @@ export default async function handler(req, res) {
   if (!message) return res.status(400).json({ error: 'No message provided' });
 
   try {
-    // Fetch live sheet data server-side
     const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
     const sheetRes = await fetch(sheetUrl);
     let dataContext = '';
@@ -24,8 +23,10 @@ export default async function handler(req, res) {
     if (sheetRes.ok) {
       const csvText = await sheetRes.text();
       const lines = csvText.trim().split('\n');
-      const headers = parseCSVLine(lines[0]);
-      const rows = lines.slice(1).map(line => {
+      // Headers on row 4 (index 3), data from row 5 (index 4)
+      const headers = parseCSVLine(lines[3]);
+
+      const rows = lines.slice(4).map(line => {
         const vals = parseCSVLine(line);
         const obj = {};
         headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
@@ -57,7 +58,7 @@ Thresholds: STOCKOUT = 0d | CRITICAL ≤ 15d | LOW ≤ 30d | HEALTHY ≤ 60d | O
 Current inventory data:
 ${dataContext}
 
-Be concise, direct, and actionable. Highlight risks clearly. Flag critical SKUs proactively. Keep answers to 3-6 sentences unless more detail is asked for.`;
+Be concise, direct, and actionable. Highlight risks clearly. Flag critical SKUs proactively. Keep answers to 3-6 sentences unless more detail is asked for. Do not use markdown bold (**) in your responses.`;
 
     const contents = [
       ...history.slice(-6).map(m => ({
@@ -98,8 +99,7 @@ function n(v) {
 
 function parseCSVLine(line) {
   const result = [];
-  let cur = '';
-  let inQuote = false;
+  let cur = '', inQuote = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') { inQuote = !inQuote; }
