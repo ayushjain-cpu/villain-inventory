@@ -3,9 +3,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 's-maxage=3600');
 
   const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-  if (!SHEET_ID) {
-    return res.status(500).json({ error: 'GOOGLE_SHEET_ID env var not set' });
-  }
+  if (!SHEET_ID) return res.status(500).json({ error: 'GOOGLE_SHEET_ID not set' });
 
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
@@ -13,9 +11,13 @@ export default async function handler(req, res) {
     if (!response.ok) throw new Error(`Sheet fetch failed: ${response.status}`);
     const csvText = await response.text();
 
-    // Parse CSV
     const lines = csvText.trim().split('\n');
     const headers = parseCSVLine(lines[0]);
+
+    if (req.query.debug) {
+      return res.status(200).json({ headers, raw: lines[0], row1: lines[1] });
+    }
+
     const rows = lines.slice(1).map(line => {
       const vals = parseCSVLine(line);
       const obj = {};
@@ -23,29 +25,33 @@ export default async function handler(req, res) {
       return obj;
     });
 
-    // Process into SKU objects
+    const findCol = (row, ...keywords) => {
+      const key = Object.keys(row).find(k =>
+        keywords.every(kw => k.toLowerCase().includes(kw.toLowerCase()))
+      );
+      return key ? row[key] : '0';
+    };
+
     const skus = rows
-      .filter(r => r['Style'] && r['Style'].trim() !== '')
+      .filter(r => {
+        const sk = Object.keys(r).find(k => k.trim().toLowerCase() === 'style');
+        return sk && r[sk] && r[sk].trim() !== '';
+      })
       .map(r => {
-        const apr = n(r["Apr'26 Sales"]);
-        const may = n(r["May'26 Sales"]);
+        const sk = Object.keys(r).find(k => k.trim().toLowerCase() === 'style');
+        const apr = n(findCol(r, 'apr'));
+        const may = n(findCol(r, 'may'));
         const avg = (apr + may) / 2;
-        const mrp = n(r['New MRP WH SOH']);
-        const sor = n(r['SOR SOH']);
-        const b2c = n(r['Total B2C WH SOH']);
+        const mrp = n(findCol(r, 'mrp'));
+        const sor = n(findCol(r, 'sor'));
+        const b2c = n(findCol(r, 'b2c'));
         const totalSOH = mrp + sor + b2c;
         const doc = avg > 0 ? (totalSOH / avg) * 30 : null;
         return {
-          style:    r['Style'].trim(),
-          apr,
-          may,
-          mtd:      n(r["Jun'26 MTD"]),
-          mrp,
-          sor,
-          b2c,
-          totalSOH,
-          avg,
-          doc
+          style: r[sk].trim(),
+          apr, may,
+          mtd: n(findCol(r, 'mtd')),
+          mrp, sor, b2c, totalSOH, avg, doc
         };
       });
 
@@ -63,8 +69,7 @@ function n(v) {
 
 function parseCSVLine(line) {
   const result = [];
-  let cur = '';
-  let inQuote = false;
+  let cur = '', inQuote = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') { inQuote = !inQuote; }
