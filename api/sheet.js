@@ -12,13 +12,15 @@ export default async function handler(req, res) {
     const csvText = await response.text();
 
     const lines = csvText.trim().split('\n');
-    const headers = parseCSVLine(lines[0]);
+
+    // Headers are on row 4 (index 3), data starts row 5 (index 4)
+    const headers = parseCSVLine(lines[3]);
 
     if (req.query.debug) {
-      return res.status(200).json({ headers, raw: lines[0], row1: lines[1] });
+      return res.status(200).json({ headers, row5: lines[4] ? parseCSVLine(lines[4]) : [] });
     }
 
-    const rows = lines.slice(1).map(line => {
+    const rows = lines.slice(4).map(line => {
       const vals = parseCSVLine(line);
       const obj = {};
       headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
