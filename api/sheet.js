@@ -2,50 +2,53 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=3600');
 
-  const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-  if (!SHEET_ID) return res.status(500).json({ error: 'GOOGLE_SHEET_ID not set' });
+  const SHEET_ID = process.env.GOOGLE_SHEET_ID || '1rRJPFefx_fKLeqJIlsQgu9GKTqimGJhC8GNGPchij-A';
+  const B2B_GID  = '1352994444';
+  const B2C_GID  = '1431205073';
 
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Sheet fetch failed: ${response.status}`);
-    const csvText = await response.text();
-
+  async function fetchTab(gid) {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
+    const csvText = await res.text();
     const lines = csvText.trim().split('\n');
-    const headers = parseCSVLine(lines[3]);
+    // Row 1 = group headers (SOH/DRR/DOC/Intransit)
+    // Row 2 = totals row
+    // Row 3 = column headers (index 2)
+    // Row 4+ = data (index 3+)
+    const groupRow   = parseCSVLine(lines[0]);
+    const headers    = parseCSVLine(lines[2]);
+    // Build column index map
+    const idx = {};
+    headers.forEach((h, i) => { idx[h.trim()] = i; });
 
-    if (req.query.debug) {
-      return res.status(200).json({ headers, row5: lines[4] ? parseCSVLine(lines[4]) : [] });
-    }
+    if (req.query.debug) return { headers, groupRow, row4: parseCSVLine(lines[3]) };
 
-    const rows = lines.slice(4).map(line => {
-      const vals = parseCSVLine(line);
-      const obj = {};
-      headers.forEach((h, i) => { obj[h.trim()] = (vals[i] || '').trim(); });
-      return obj;
-    });
-
-    // Exact column names from the sheet
+    const rows = lines.slice(3).map(line => parseCSVLine(line));
     const skus = rows
-      .filter(r => r['Style'] && r['Style'].trim() !== '')
+      .filter(r => r[idx['Style']] && r[idx['Style']].trim() !== '')
       .map(r => {
-        const apr = n(r["Apr'26 Sales"]);
-        const may = n(r["May'26 Sales"]);
-        const avg = (apr + may) / 2;
-        const mrp = n(r['New MRP WH SOH']);
-        const sor = n(r['SOR SOH']);
-        const b2c = n(r['Total B2C WH SOH']);
-        const totalSOH = mrp + sor + b2c;
-        const doc = avg > 0 ? (totalSOH / avg) * 30 : null;
+        const g = (col) => r[idx[col]] !== undefined ? r[idx[col]].trim() : '';
         return {
-          style: r['Style'].trim(),
-          apr, may,
-          mtd: n(r["Jun'26 MTD"]),
-          mrp, sor, b2c, totalSOH, avg, doc
+          style:         g('Style'),
+          ean:           g('EAN'),
+          channelTag:    g('Channel Tagging'),
+          totalSOH:      n(g('Total WH SOH')),
+          sohGGN:        n(g('GGN')),   // first GGN = SOH
+          sohBHW:        n(g('BHW')),
+          sohBLR:        n(g('BLR')),
+          totalDRR:      n(g('Total DRR')),
+          totalDOC:      n(g('Total DOC')),
+          totalIntransit:n(g('Total Intransit')),
         };
       });
+    return skus;
+  }
 
-    res.status(200).json({ skus, updatedAt: new Date().toISOString() });
+  try {
+    const [b2b, b2c] = await Promise.all([fetchTab(B2B_GID), fetchTab(B2C_GID)]);
+    if (req.query.debug) return res.status(200).json({ b2b, b2c });
+    res.status(200).json({ b2b, b2c, updatedAt: new Date().toISOString() });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
