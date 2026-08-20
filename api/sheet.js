@@ -6,15 +6,39 @@ export default async function handler(req, res) {
   const B2B_GID  = '1352994444';
   const B2C_GID  = '1431205073';
 
-  // Column positions (0-indexed), same for both tabs:
-  // 0=Style, 1=EAN, 2=Channel Tagging
-  // SOH: 3=Total WH SOH, 4=GGN, 5=BHW, 6=BLR
-  // DRR: 7=Total DRR, 8=GGN, 9=BHW, 10=BLR
-  // DOC: 11=Total DOC, 12=GGN, 13=BHW, 14=BLR
-  // Intransit(STN+Factory): 15=Total, 16=GGN, 17=BHW, 18=BLR
-  // DOC with Intransit: 19=Total, 20=GGN, 21=BHW, 22=BLR
+  // B2B: 0=Style, 1=EAN, 2=Channel Tagging, 3=TotalSOH, 4=GGN, 5=BHW, 6=BLR, 7=TotalDRR, 8=GGN, 9=BHW, 10=BLR, 11=TotalDOC, 12=GGN, 13=BHW, 14=BLR, 15=TotalIntransit, 16=GGN, 17=BHW, 18=BLR, 19=DocInt, 20=GGN, 21=BHW, 22=BLR
+  // B2C: 0=Style, 1=EAN, NO channel, 2=TotalSOH, 3=GGN, 4=BHW, 5=BLR, 6=TotalDRR, 7=GGN, 8=BHW, 9=BLR, 10=TotalDOC, 11=GGN, 12=BHW, 13=BLR, 14=TotalIntransit, 15=GGN, 16=BHW, 17=BLR, 18=DocInt, 19=GGN, 20=BHW, 21=BLR
 
-  async function fetchTab(gid) {
+  function parseRow(r, hasChannel) {
+    const o = hasChannel ? 1 : 0; // offset
+    return {
+      style:          r[0].trim(),
+      ean:            (r[1] || '').trim(),
+      channelTag:     hasChannel ? (r[2] || '').trim() : null,
+      totalSOH:       n(r[2 + o]),
+      sohGGN:         n(r[3 + o]),
+      sohBHW:         n(r[4 + o]),
+      sohBLR:         n(r[5 + o]),
+      totalDRR:       n(r[6 + o]),
+      drrGGN:         n(r[7 + o]),
+      drrBHW:         n(r[8 + o]),
+      drrBLR:         n(r[9 + o]),
+      totalDOC:       n(r[10 + o]),
+      docGGN:         n(r[11 + o]),
+      docBHW:         n(r[12 + o]),
+      docBLR:         n(r[13 + o]),
+      totalIntransit: n(r[14 + o]),
+      intGGN:         n(r[15 + o]),
+      intBHW:         n(r[16 + o]),
+      intBLR:         n(r[17 + o]),
+      docIntTotal:    n(r[18 + o]),
+      docIntGGN:      n(r[19 + o]),
+      docIntBHW:      n(r[20 + o]),
+      docIntBLR:      n(r[21 + o]),
+    };
+  }
+
+  async function fetchTab(gid, hasChannel) {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Sheet fetch failed: ${response.status}`);
@@ -22,52 +46,20 @@ export default async function handler(req, res) {
     const lines = csvText.trim().split('\n');
 
     if (req.query.debug) {
-      return {
-        line0: parseCSVLine(lines[0]),
-        line1: parseCSVLine(lines[1]),
-        line2: parseCSVLine(lines[2]),
-        line3: parseCSVLine(lines[3]),
-        totalLines: lines.length
-      };
+      return { headers: parseCSVLine(lines[2]), row4: parseCSVLine(lines[3]) };
     }
 
     return lines.slice(3)
       .map(line => parseCSVLine(line))
       .filter(r => r[0] && r[0].trim() !== '')
-      .map(r => ({
-        style:          r[0].trim(),
-        ean:            (r[1] || '').trim(),
-        channelTag:     (r[2] || '').trim(),
-        // SOH
-        totalSOH:       n(r[3]),
-        sohGGN:         n(r[4]),
-        sohBHW:         n(r[5]),
-        sohBLR:         n(r[6]),
-        // DRR
-        totalDRR:       n(r[7]),
-        drrGGN:         n(r[8]),
-        drrBHW:         n(r[9]),
-        drrBLR:         n(r[10]),
-        // DOC
-        totalDOC:       n(r[11]),
-        docGGN:         n(r[12]),
-        docBHW:         n(r[13]),
-        docBLR:         n(r[14]),
-        // Intransit
-        totalIntransit: n(r[15]),
-        intGGN:         n(r[16]),
-        intBHW:         n(r[17]),
-        intBLR:         n(r[18]),
-        // DOC with Intransit
-        docIntTotal:    n(r[19]),
-        docIntGGN:      n(r[20]),
-        docIntBHW:      n(r[21]),
-        docIntBLR:      n(r[22]),
-      }));
+      .map(r => parseRow(r, hasChannel));
   }
 
   try {
-    const [b2b, b2c] = await Promise.all([fetchTab(B2B_GID), fetchTab(B2C_GID)]);
+    const [b2b, b2c] = await Promise.all([
+      fetchTab(B2B_GID, true),
+      fetchTab(B2C_GID, false)
+    ]);
     if (req.query.debug) return res.status(200).json({ b2b, b2c });
     res.status(200).json({ b2b, b2c, updatedAt: new Date().toISOString() });
   } catch (e) {
