@@ -209,7 +209,7 @@ export default function App() {
               <thead>
                 {/* Group row */}
                 <tr>
-                  <th colSpan={2} style={{ background: '#111', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid rgba(255,255,255,0.06)' }} />
+                  <th colSpan={activeTab === 'b2b' ? 2 : 1} style={{ background: '#111', position: 'sticky', top: 0, zIndex: 2, borderBottom: '1px solid rgba(255,255,255,0.06)' }} />
                   <GH label="SOH" cols={4} color="#ff2d55" />
                   <GH label="DRR" cols={4} color="#00e676" />
                   <GH label="DOC" cols={4} color="#f5c518" />
@@ -219,7 +219,7 @@ export default function App() {
                 {/* Col headers */}
                 <tr>
                   <TH label="Style"    col="style"       />
-                  <TH label="Channel"  col="channelTag"  />
+                  {activeTab === 'b2b' && <TH label="Channel" col="channelTag" />}
                   <TH label="Total"    col="totalSOH"    right />
                   <TH label="GGN"      col="sohGGN"      right />
                   <TH label="BHW"      col="sohBHW"      right />
@@ -250,7 +250,7 @@ export default function App() {
                     onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
                   >
                     <td style={{ padding: '7px 10px', color: '#e8e8e8', fontWeight: 500, whiteSpace: 'nowrap', minWidth: 160 }}>{r.style}</td>
-                    <td style={{ padding: '7px 10px', color: '#555', fontSize: 11, whiteSpace: 'nowrap' }}>{r.channelTag || '—'}</td>
+                    {activeTab === 'b2b' && <td style={{ padding: '7px 10px', color: '#555', fontSize: 11, whiteSpace: 'nowrap' }}>{r.channelTag || '—'}</td>}
                     {/* SOH */}
                     <td style={{ padding: '7px 10px', textAlign: 'right', color: '#e8e8e8', fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{fmt(r.totalSOH)}</td>
                     <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohGGN)}</td>
