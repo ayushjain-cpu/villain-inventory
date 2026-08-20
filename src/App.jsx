@@ -29,9 +29,9 @@ function Pill({ v }) {
 function Card({ label, value, sub, accent }) {
   return (
     <div style={{ flex: 1, minWidth: 130, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderLeft: `3px solid ${accent}`, borderRadius: 8, padding: '10px 14px' }}>
-      <div style={{ color: '#555', fontSize: 9, fontFamily: MONO, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
+      <div style={{ color: '#888', fontSize: 9, fontFamily: MONO, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>{label}</div>
       <div style={{ color: '#f0f0f0', fontSize: 20, fontWeight: 700, fontFamily: BEBAS, letterSpacing: '0.04em', lineHeight: 1.1 }}>{value}</div>
-      {sub && <div style={{ color: '#333', fontSize: 10, marginTop: 3, fontFamily: MONO }}>{sub}</div>}
+      {sub && <div style={{ color: '#888', fontSize: 10, marginTop: 3, fontFamily: MONO }}>{sub}</div>}
     </div>
   );
 }
@@ -132,7 +132,7 @@ export default function App() {
   const TH = ({ label, col, right }) => (
     <th onClick={() => toggleSort(col)} style={{
       padding: '6px 10px', textAlign: right ? 'right' : 'left',
-      color: sortCol === col ? RED : '#666',
+      color: sortCol === col ? RED : '#aaa',
       cursor: 'pointer', userSelect: 'none',
       fontFamily: MONO, fontSize: 9,
       letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap',
@@ -165,12 +165,12 @@ export default function App() {
       <div style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'rgba(255,45,85,0.03)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
           <span style={{ fontFamily: BEBAS, fontSize: 30, color: RED, letterSpacing: '0.12em' }}>VILLAIN</span>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: '#333', letterSpacing: '0.2em' }}>INVENTORY REVIEW</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: '#555', letterSpacing: '0.2em' }}>INVENTORY REVIEW</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {stockoutCnt > 0 && <span style={{ background: 'rgba(255,45,85,0.15)', border: '1px solid rgba(255,45,85,0.3)', color: RED, fontFamily: MONO, fontSize: 10, padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>⚠ {stockoutCnt} STOCKOUT</span>}
           {criticalCnt > 0 && <span style={{ background: 'rgba(255,107,0,0.12)', border: '1px solid rgba(255,107,0,0.3)', color: '#ff6b00', fontFamily: MONO, fontSize: 10, padding: '4px 10px', borderRadius: 6, fontWeight: 700 }}>⚠ {criticalCnt} CRITICAL</span>}
-          {lastUpdated && <span style={{ color: '#333', fontFamily: MONO, fontSize: 9 }}>updated {lastUpdated}</span>}
+          {lastUpdated && <span style={{ color: '#555', fontFamily: MONO, fontSize: 9 }}>updated {lastUpdated}</span>}
           <button onClick={fetchData} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '4px 12px', color: '#555', fontSize: 10, cursor: 'pointer', fontFamily: MONO }}>↻ REFRESH</button>
         </div>
       </div>
@@ -179,7 +179,7 @@ export default function App() {
       <div style={{ display: 'flex', padding: '0 20px', background: '#0d0d0d', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
         {['b2b', 'b2c'].map(tab => (
           <button key={tab} onClick={() => { setActiveTab(tab); setSearch(''); setSortCol('totalDOC'); setSortDir('asc'); setChat([]); }}
-            style={{ padding: '9px 20px', background: 'none', border: 'none', borderBottom: activeTab === tab ? `2px solid ${RED}` : '2px solid transparent', color: activeTab === tab ? RED : '#444', fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1 }}>
+            style={{ padding: '9px 20px', background: 'none', border: 'none', borderBottom: activeTab === tab ? `2px solid ${RED}` : '2px solid transparent', color: activeTab === tab ? RED : '#888', fontFamily: MONO, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1 }}>
             {tab === 'b2b' ? 'B2B Summary' : 'B2C Summary'}
           </button>
         ))}
@@ -201,7 +201,7 @@ export default function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexShrink: 0 }}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search style..."
               style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '6px 12px', color: '#e8e8e8', fontSize: 12, outline: 'none', fontFamily: 'inherit', width: 200 }} />
-            <span style={{ color: '#333', fontFamily: MONO, fontSize: 10 }}>{filtered.length} of {skus.length} SKUs</span>
+            <span style={{ color: '#666', fontFamily: MONO, fontSize: 10 }}>{filtered.length} of {skus.length} SKUs</span>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.015)' }}>
@@ -250,17 +250,17 @@ export default function App() {
                     onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
                   >
                     <td style={{ padding: '7px 10px', color: '#e8e8e8', fontWeight: 500, whiteSpace: 'nowrap', minWidth: 160 }}>{r.style}</td>
-                    {activeTab === 'b2b' && <td style={{ padding: '7px 10px', color: '#555', fontSize: 11, whiteSpace: 'nowrap' }}>{r.channelTag || '—'}</td>}
+                    {activeTab === 'b2b' && <td style={{ padding: '7px 10px', color: '#aaa', fontSize: 11, whiteSpace: 'nowrap' }}>{r.channelTag || '—'}</td>}
                     {/* SOH */}
                     <td style={{ padding: '7px 10px', textAlign: 'right', color: '#e8e8e8', fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{fmt(r.totalSOH)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohGGN)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohBHW)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohBLR)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohGGN)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohBHW)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.sohBLR)}</td>
                     {/* DRR */}
                     <td style={{ padding: '7px 10px', textAlign: 'right', color: '#e8e8e8', fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{fmt(r.totalDRR)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.drrGGN)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.drrBHW)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.drrBLR)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.drrGGN)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.drrBHW)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.drrBLR)}</td>
                     {/* DOC */}
                     <td style={{ padding: '7px 10px', textAlign: 'right' }}><Pill v={r.totalDOC} /></td>
                     <td style={{ padding: '7px 10px', textAlign: 'right' }}><Pill v={r.docGGN} /></td>
@@ -268,9 +268,9 @@ export default function App() {
                     <td style={{ padding: '7px 10px', textAlign: 'right' }}><Pill v={r.docBLR} /></td>
                     {/* Intransit */}
                     <td style={{ padding: '7px 10px', textAlign: 'right', color: '#e8e8e8', fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{fmt(r.totalIntransit)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.intGGN)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.intBHW)}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#888', fontFamily: MONO, fontSize: 11 }}>{fmt(r.intBLR)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.intGGN)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.intBHW)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#ccc', fontFamily: MONO, fontSize: 11 }}>{fmt(r.intBLR)}</td>
                     {/* DOC w/ Intransit */}
                     <td style={{ padding: '7px 10px', textAlign: 'right' }}><Pill v={r.docIntTotal} /></td>
                     <td style={{ padding: '7px 10px', textAlign: 'right' }}><Pill v={r.docIntGGN} /></td>
@@ -285,7 +285,7 @@ export default function App() {
           {/* Legend */}
           <div style={{ display: 'flex', gap: 14, marginTop: 8, flexWrap: 'wrap', flexShrink: 0 }}>
             {[['≤7d', '#ff2d55'], ['≤15d CRITICAL', '#ff6b00'], ['≤30d LOW', '#f5c518'], ['≤60d HEALTHY', '#00e676'], ['>60d OVERSTOCK', '#7c5cfc']].map(([l, c]) => (
-              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: MONO, fontSize: 9, color: '#333' }}>
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: MONO, fontSize: 9, color: '#aaa' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />{l}
               </div>
             ))}
@@ -299,9 +299,9 @@ export default function App() {
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {chat.length === 0 && (
-              <div style={{ color: '#2a2a2a', fontSize: 11, fontFamily: MONO, lineHeight: 1.7 }}>
+              <div style={{ color: '#555', fontSize: 11, fontFamily: MONO, lineHeight: 1.7 }}>
                 Ask about {activeTab.toUpperCase()} inventory...<br /><br />
-                <span style={{ color: '#222' }}>"Critical SKUs?" · "Low DOC?" · "Stockout risk?"</span>
+                <span style={{ color: '#444' }}>"Critical SKUs?" · "Low DOC?" · "Stockout risk?"</span>
               </div>
             )}
             {chat.map((m, i) => (
