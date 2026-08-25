@@ -50,10 +50,10 @@ function docStatus(doc) {
 // ── Card — exact MyFitness ────────────────────────────────────────────────────
 function Card({ label, value, sub, accent }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '16px 18px', flex: 1 }}>
-      <div style={{ fontSize: 10, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: accent || TEXT, fontFamily: MONO }}>{value}</div>
-      {sub !== undefined && <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{sub}</div>}
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
+      <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: accent || TEXT, fontFamily: MONO }}>{value}</div>
+      {sub !== undefined && <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{sub}</div>}
     </div>
   );
 }
@@ -272,7 +272,7 @@ export default function App() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${BORDER}` }}>
 
           {/* Cards — exact MyFitness gap/padding */}
-          <div style={{ display: 'flex', gap: 10, padding: '16px 20px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 8, padding: '10px 20px', flexShrink: 0 }}>
             <Card label="B2B Total SOH" value={fmtFull(b2bSOH)} sub={`${allB2B.length} SKUs`} accent={tab.color} />
             <Card label="B2B Avg DOC"   value={fmtDoc(b2bDOC)}  sub="SOH ÷ DRR" />
             <Card label="B2C Total SOH" value={fmtFull(b2cSOH)} sub={`${allB2C.length} SKUs`} accent="#00c896" />
