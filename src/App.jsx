@@ -8,6 +8,7 @@ const BORDER2 = 'rgba(255,255,255,0.07)';
 const TEXT    = '#e6edf3';
 const TEXT2   = '#c9d1d9';
 const MUTED   = '#6b7a8d';
+const DIM     = '#a0aab4';
 const FONT    = "'DM Sans', sans-serif";
 const MONO    = 'monospace';
 
@@ -331,9 +332,9 @@ export default function App() {
                       </td>
                       {/* B2B SOH */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(b?.totalSOH)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohBLR)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohGGN)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohBHW)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohBLR)}</td>
                       {/* B2B DOC */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.04)' }}><DocBadge v={b?.totalDOC} /></td>
                       <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={b?.docGGN} /></td>
@@ -341,14 +342,14 @@ export default function App() {
                       <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={b?.docBLR} /></td>
                       {/* B2B DRR */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(b?.totalDRR)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrBLR)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrGGN)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrBHW)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrBLR)}</td>
                       {/* B2C SOH */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.08)' }}>{fmtFull(c?.totalSOH)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohBLR)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohGGN)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohBHW)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohBLR)}</td>
                       {/* B2C DOC */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.04)' }}><DocBadge v={c?.totalDOC} /></td>
                       <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={c?.docGGN} /></td>
@@ -356,9 +357,9 @@ export default function App() {
                       <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={c?.docBLR} /></td>
                       {/* B2C DRR */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(c?.totalDRR)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrBLR)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrGGN)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrBHW)}</td>
+                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrBLR)}</td>
                     </tr>
                   );
                 })}
