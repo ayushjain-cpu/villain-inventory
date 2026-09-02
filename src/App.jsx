@@ -198,6 +198,22 @@ export default function App() {
     </th>
   );
 
+  // Sticky column header (both horizontally and vertically frozen)
+  const STH = ({ label, col, left }) => (
+    <th onClick={() => toggleSort(col)} style={{
+      padding: '10px 12px', textAlign: 'left',
+      color: sortCol === col ? tab.color : MUTED,
+      cursor: 'pointer', userSelect: 'none',
+      fontFamily: MONO, fontSize: 9,
+      letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+      borderBottom: `1px solid ${BORDER2}`,
+      borderRight: '1px solid rgba(255,255,255,0.06)',
+      background: '#0b0f14', position: 'sticky', top: 22, left, zIndex: 3, fontWeight: 400,
+    }}>
+      {label}{sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+    </th>
+  );
+
   // Group header
   const GH = ({ label, cols, color, leftBorder }) => (
     <th colSpan={cols} style={{
@@ -312,7 +328,7 @@ export default function App() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr>
-                  <th colSpan={2} style={{ background: BG, position: 'sticky', top: 0, zIndex: 2, borderBottom: `1px solid ${BORDER}` }} />
+                  <th colSpan={2} style={{ background: BG, position: 'sticky', top: 0, left: 0, zIndex: 4, borderBottom: `1px solid ${BORDER}`, borderRight: '1px solid rgba(255,255,255,0.06)' }} />
                   <GH label="Summary" cols={3} color="#ffffff" leftBorder />
                   <GH label="B2B — SOH" cols={4} color="#e879f9" leftBorder />
                   <GH label="B2B — DOC" cols={4} color="#f5a623" leftBorder />
@@ -322,8 +338,8 @@ export default function App() {
                   <GH label="B2C — DRR" cols={4} color="#00c896" leftBorder />
                 </tr>
                 <tr style={{ borderBottom: `1px solid ${BORDER2}` }}>
-                  <TH label="Style"      col="style"   />
-                  <TH label="Size"       col="size"    />
+                  <STH label="Style" col="style" left={0} />
+                  <STH label="Size"  col="size"  left={180} />
                   <TH label="Total SOH"  col="b2b_totalSOH" right />
                   <TH label="Total DRR"  col="b2b_totalDRR" right />
                   <TH label="Total DOC"  col="b2b_totalDOC" right />
@@ -347,8 +363,8 @@ export default function App() {
                       onMouseEnter={e => e.currentTarget.style.background = `${sColor}0a`}
                       onMouseLeave={e => e.currentTarget.style.background = rowBg}
                     >
-                      <td style={{ padding: '9px 12px', color: TEXT2, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12 }}>{row.style}</td>
-                      <td style={{ padding: '9px 10px' }}>
+                      <td style={{ padding: '9px 12px', color: TEXT2, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12, position: 'sticky', left: 0, zIndex: 2, background: i % 2 === 0 ? BG : BG2, borderRight: '1px solid rgba(255,255,255,0.06)' }}>{row.style}</td>
+                      <td style={{ padding: '9px 10px', position: 'sticky', left: 180, zIndex: 2, background: i % 2 === 0 ? BG : BG2, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
                         <span style={{ color: sColor, fontFamily: MONO, fontSize: 9, fontWeight: 700, background: `${sColor}15`, border: `1px solid ${sColor}33`, padding: '2px 7px', borderRadius: 10 }}>{row.sizeGroup}</span>
                       </td>
                       {/* Summary: combined B2B+B2C SOH, DRR, DOC */}
