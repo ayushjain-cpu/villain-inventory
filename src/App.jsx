@@ -274,13 +274,30 @@ export default function App() {
 
           {/* Cards — exact MyFitness gap/padding */}
           <div style={{ display: 'flex', gap: 8, padding: '10px 20px', flexShrink: 0 }}>
-            <Card label="B2B Total SOH" value={fmtFull(b2bSOH)} sub={`${allB2B.length} SKUs`} accent={tab.color} />
-            <Card label="B2B Avg DOC"   value={fmtDoc(b2bDOC)}  sub="SOH ÷ DRR" />
-            <Card label="B2C Total SOH" value={fmtFull(b2cSOH)} sub={`${allB2C.length} SKUs`} accent="#00c896" />
-            <Card label="B2C Avg DOC"   value={fmtDoc(b2cDOC)}  sub="SOH ÷ DRR" />
-            <Card label="Total DRR"     value={fmtFull(b2bDRR + b2cDRR)} sub="B2B + B2C combined"
-              sub={<span>{critCnt > 0 && <span style={{ color: '#ff4444' }}>{critCnt} critical </span>}{stockCnt > 0 && <span style={{ color: '#f5a623' }}>{stockCnt} stockout</span>}</span>}
-              accent={critCnt > 0 ? '#ff4444' : stockCnt > 0 ? '#f5a623' : '#00c896'} />
+            {[
+              { label: 'Total SOH', b2bVal: fmtFull(b2bSOH), b2cVal: fmtFull(b2cSOH), b2bColor: tab.color, b2cColor: '#00c896', sub: `${allB2B.length} B2B · ${allB2C.length} B2C SKUs` },
+              { label: 'Total DRR', b2bVal: fmtFull(b2bDRR), b2cVal: fmtFull(b2cDRR), b2bColor: TEXT, b2cColor: TEXT, sub: 'daily run rate' },
+              { label: 'Avg DOC  (SOH ÷ DRR)', b2bVal: fmtDoc(b2bDOC), b2cVal: fmtDoc(b2cDOC),
+                b2bColor: !b2bDOC ? TEXT : b2bDOC <= 15 ? '#ff4444' : b2bDOC <= 30 ? '#f5a623' : b2bDOC <= 60 ? '#00c896' : '#7c5cfc',
+                b2cColor: !b2cDOC ? TEXT : b2cDOC <= 15 ? '#ff4444' : b2cDOC <= 30 ? '#f5a623' : b2cDOC <= 60 ? '#00c896' : '#7c5cfc',
+                sub: critCnt > 0 ? `⚠ ${critCnt} critical` : stockCnt > 0 ? `⚠ ${stockCnt} stockout` : 'all healthy' },
+            ].map(c => (
+              <div key={c.label} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
+                <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{c.label}</div>
+                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end', marginBottom: 4 }}>
+                  <div>
+                    <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, marginBottom: 2, letterSpacing: '0.08em' }}>B2B</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: c.b2bColor, fontFamily: MONO, lineHeight: 1 }}>{c.b2bVal}</div>
+                  </div>
+                  <div style={{ width: 1, height: 28, background: BORDER2, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, marginBottom: 2, letterSpacing: '0.08em' }}>B2C</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: c.b2cColor, fontFamily: MONO, lineHeight: 1 }}>{c.b2cVal}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 10, color: c.label.includes('DOC') && critCnt > 0 ? '#ff4444' : MUTED, marginTop: 2 }}>{c.sub}</div>
+              </div>
+            ))}
           </div>
 
           {/* Search */}
@@ -296,6 +313,7 @@ export default function App() {
               <thead>
                 <tr>
                   <th colSpan={2} style={{ background: BG, position: 'sticky', top: 0, zIndex: 2, borderBottom: `1px solid ${BORDER}` }} />
+                  <GH label="Summary" cols={3} color="#ffffff" leftBorder />
                   <GH label="B2B — SOH" cols={4} color="#e879f9" leftBorder />
                   <GH label="B2B — DOC" cols={4} color="#f5a623" leftBorder />
                   <GH label="B2B — DRR" cols={4} color="#00c896" leftBorder />
@@ -304,8 +322,11 @@ export default function App() {
                   <GH label="B2C — DRR" cols={4} color="#00c896" leftBorder />
                 </tr>
                 <tr style={{ borderBottom: `1px solid ${BORDER2}` }}>
-                  <TH label="Style"  col="style"   />
-                  <TH label="Size"   col="size"    />
+                  <TH label="Style"      col="style"   />
+                  <TH label="Size"       col="size"    />
+                  <TH label="Total SOH"  col="b2b_totalSOH" right />
+                  <TH label="Total DRR"  col="b2b_totalDRR" right />
+                  <TH label="Total DOC"  col="b2b_totalDOC" right />
                   <TH label="Total"  col="b2b_totalSOH" right /><TH label="GGN" col="b2b_sohGGN" right /><TH label="BHW" col="b2b_sohBHW" right /><TH label="BLR" col="b2b_sohBLR" right />
                   <TH label="Total"  col="b2b_totalDOC" right /><TH label="GGN" col="b2b_docGGN" right /><TH label="BHW" col="b2b_docBHW" right /><TH label="BLR" col="b2b_docBLR" right />
                   <TH label="Total"  col="b2b_totalDRR" right /><TH label="GGN" col="b2b_drrGGN" right /><TH label="BHW" col="b2b_drrBHW" right /><TH label="BLR" col="b2b_drrBLR" right />
@@ -330,6 +351,20 @@ export default function App() {
                       <td style={{ padding: '9px 10px' }}>
                         <span style={{ color: sColor, fontFamily: MONO, fontSize: 9, fontWeight: 700, background: `${sColor}15`, border: `1px solid ${sColor}33`, padding: '2px 7px', borderRadius: 10 }}>{row.sizeGroup}</span>
                       </td>
+                      {/* Summary: combined B2B+B2C SOH, DRR, DOC */}
+                      {(() => {
+                        const combSOH = (b?.totalSOH || 0) + (c?.totalSOH || 0);
+                        const combDRR = (b?.totalDRR || 0) + (c?.totalDRR || 0);
+                        const combDOC = combDRR > 0 ? combSOH / combDRR : null;
+                        const ds = combDOC ? (!isFinite(combDOC) ? {color:MUTED,bg:'transparent',border:`1px solid rgba(255,255,255,0.08)`} : combDOC<=7 ? {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'} : combDOC<=15 ? {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'} : combDOC<=30 ? {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'} : combDOC<=60 ? {color:'#00c896',bg:'rgba(0,200,150,0.10)',border:'1px solid rgba(0,200,150,0.33)'} : {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'}) : null;
+                        return <>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>{combSOH ? fmtFull(combSOH) : '—'}</td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, background: 'rgba(255,255,255,0.02)' }}>{combDRR ? fmtFull(combDRR) : '—'}</td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', background: 'rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+                            {ds ? <span style={{ background: ds.bg, color: ds.color, border: ds.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em' }}>{combDOC ? Math.round(combDOC)+'d' : '—'}</span> : <span style={{ color: MUTED }}>—</span>}
+                          </td>
+                        </>;
+                      })()}
                       {/* B2B SOH */}
                       <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(b?.totalSOH)}</td>
                       <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohGGN)}</td>
