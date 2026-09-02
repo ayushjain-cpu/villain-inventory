@@ -129,9 +129,23 @@ export default function App() {
     .filter(r => r.style.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sortCol === 'style') return sortDir === 'asc' ? a.style.localeCompare(b.style) : b.style.localeCompare(a.style);
-      const [src, ...rest] = sortCol.split('_');
-      const col = rest.join('_');
-      let av = (a[src]?.[col] ?? 0), bv = (b[src]?.[col] ?? 0);
+
+      // Summary columns: combined B2B+B2C
+      const getVal = (row) => {
+        if (sortCol === 'sum_soh') return (row.b2b?.totalSOH || 0) + (row.b2c?.totalSOH || 0);
+        if (sortCol === 'sum_drr') return (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
+        if (sortCol === 'sum_doc') {
+          const soh = (row.b2b?.totalSOH || 0) + (row.b2c?.totalSOH || 0);
+          const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
+          return drr > 0 ? soh / drr : 0;
+        }
+        // B2B or B2C specific columns
+        const [src, ...rest] = sortCol.split('_');
+        const col = rest.join('_');
+        return row[src]?.[col] ?? 0;
+      };
+
+      let av = getVal(a), bv = getVal(b);
       if (av === 0 && sortDir === 'asc') av = Infinity;
       if (bv === 0 && sortDir === 'asc') bv = Infinity;
       return sortDir === 'asc' ? av - bv : bv - av;
@@ -340,9 +354,9 @@ export default function App() {
                 <tr style={{ borderBottom: `1px solid ${BORDER2}` }}>
                   <STH label="Style" col="style" left={0} />
                   <STH label="Size"  col="size"  left={180} />
-                  <TH label="Total SOH"  col="b2b_totalSOH" right />
-                  <TH label="Total DRR"  col="b2b_totalDRR" right />
-                  <TH label="Total DOC"  col="b2b_totalDOC" right />
+                  <TH label="Total SOH"  col="sum_soh" right />
+                  <TH label="Total DRR"  col="sum_drr" right />
+                  <TH label="Total DOC"  col="sum_doc" right />
                   <TH label="Total"  col="b2b_totalSOH" right /><TH label="GGN" col="b2b_sohGGN" right /><TH label="BHW" col="b2b_sohBHW" right /><TH label="BLR" col="b2b_sohBLR" right />
                   <TH label="Total"  col="b2b_totalDOC" right /><TH label="GGN" col="b2b_docGGN" right /><TH label="BHW" col="b2b_docBHW" right /><TH label="BLR" col="b2b_docBLR" right />
                   <TH label="Total"  col="b2b_totalDRR" right /><TH label="GGN" col="b2b_drrGGN" right /><TH label="BHW" col="b2b_drrBHW" right /><TH label="BLR" col="b2b_drrBLR" right />
