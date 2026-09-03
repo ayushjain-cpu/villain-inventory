@@ -163,15 +163,28 @@ export default function App() {
       return sortDir === 'asc' ? av - bv : bv - av;
     });
 
-  // Summary
-  const allB2B = merged.map(r => r.b2b).filter(Boolean);
-  const allB2C = merged.map(r => r.b2c).filter(Boolean);
-  const b2bSOH = allB2B.reduce((s, r) => s + r.totalSOH, 0);
-  const b2cSOH = allB2C.reduce((s, r) => s + r.totalSOH, 0);
-  const b2bDRR = allB2B.reduce((s, r) => s + r.totalDRR, 0);
-  const b2cDRR = allB2C.reduce((s, r) => s + r.totalDRR, 0);
+  // Summary — filtered to current size tab (drives cards + subtotal row)
+  const visB2B = visibleRows.map(r => r.b2b).filter(Boolean);
+  const visB2C = visibleRows.map(r => r.b2c).filter(Boolean);
+  const b2bSOH = visB2B.reduce((s, r) => s + r.totalSOH, 0);
+  const b2cSOH = visB2C.reduce((s, r) => s + r.totalSOH, 0);
+  const b2bDRR = visB2B.reduce((s, r) => s + r.totalDRR, 0);
+  const b2cDRR = visB2C.reduce((s, r) => s + r.totalDRR, 0);
   const b2bDOC = b2bDRR > 0 ? b2bSOH / b2bDRR : null;
   const b2cDOC = b2cDRR > 0 ? b2cSOH / b2cDRR : null;
+  const allB2B = visB2B; const allB2C = visB2C;
+
+  // Subtotal row for summary columns
+  const subCombSOH = b2bSOH + b2cSOH;
+  const subCombDRR = b2bDRR + b2cDRR;
+  const subCombDOC = subCombDRR > 0 ? subCombSOH / subCombDRR : null;
+  // Proj DRR for subtotal: weighted by size group
+  const subProjDRR = visibleRows.reduce((s, r) => {
+    const drr = (r.b2b?.totalDRR || 0) + (r.b2c?.totalDRR || 0);
+    return s + drr * (r.sizeGroup === '50ml' ? 1.30 : 1.15);
+  }, 0);
+  const subFDOC = subProjDRR > 0 ? subCombSOH / subProjDRR : null;
+
   const critCnt = merged.filter(r => (r.b2b?.totalDOC > 0 && r.b2b?.totalDOC <= 15) || (r.b2c?.totalDOC > 0 && r.b2c?.totalDOC <= 15)).length;
   const stockCnt = merged.filter(r => !r.b2b?.totalSOH && !r.b2c?.totalSOH).length;
 
@@ -380,6 +393,53 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
+                {/* Subtotal row */}
+                {(() => {
+                  const pillS = (d) => !d || !isFinite(d) ? {color:MUTED,bg:'transparent',border:'1px solid rgba(255,255,255,0.08)'} : d<=7 ? {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'} : d<=15 ? {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'} : d<=30 ? {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'} : d<=60 ? {color:'#00c896',bg:'rgba(0,200,150,0.10)',border:'1px solid rgba(0,200,150,0.33)'} : {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'};
+                  const SubPill = ({d}) => { const s = pillS(d); return d ? <span style={{ background: s.bg, color: s.color, border: s.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em' }}>{Math.round(d)+'d'}</span> : <span style={{color:MUTED}}>—</span>; };
+                  const subBg = 'rgba(255,255,255,0.04)';
+                  const subB2BSOH = visB2B.reduce((s,r)=>s+r.totalSOH,0), subB2CSOH = visB2C.reduce((s,r)=>s+r.totalSOH,0);
+                  const subB2BDRR = visB2B.reduce((s,r)=>s+r.totalDRR,0), subB2CDRR = visB2C.reduce((s,r)=>s+r.totalDRR,0);
+                  const subB2BGDN = visB2B.reduce((s,r)=>s+r.sohGGN,0), subB2BBHW = visB2B.reduce((s,r)=>s+r.sohBHW,0), subB2BBLR = visB2B.reduce((s,r)=>s+r.sohBLR,0);
+                  const subB2CGDN = visB2C.reduce((s,r)=>s+r.sohGGN,0), subB2CBHW = visB2C.reduce((s,r)=>s+r.sohBHW,0), subB2CBLR = visB2C.reduce((s,r)=>s+r.sohBLR,0);
+                  const subB2BDOC = subB2BDRR>0?subB2BSOH/subB2BDRR:null, subB2CDOC = subB2CDRR>0?subB2CSOH/subB2CDRR:null;
+                  const subB2BdGGN=visB2B.reduce((s,r)=>s+r.docGGN,0)/Math.max(visB2B.length,1), subB2BdBHW=visB2B.reduce((s,r)=>s+r.docBHW,0)/Math.max(visB2B.length,1), subB2BdBLR=visB2B.reduce((s,r)=>s+r.docBLR,0)/Math.max(visB2B.length,1);
+                  const subB2CdGGN=visB2C.reduce((s,r)=>s+r.docGGN,0)/Math.max(visB2C.length,1), subB2CdBHW=visB2C.reduce((s,r)=>s+r.docBHW,0)/Math.max(visB2C.length,1), subB2CdBLR=visB2C.reduce((s,r)=>s+r.docBLR,0)/Math.max(visB2C.length,1);
+                  const subB2BdRGGN=visB2B.reduce((s,r)=>s+r.drrGGN,0), subB2BdRBHW=visB2B.reduce((s,r)=>s+r.drrBHW,0), subB2BdRBLR=visB2B.reduce((s,r)=>s+r.drrBLR,0);
+                  const subB2CdRGGN=visB2C.reduce((s,r)=>s+r.drrGGN,0), subB2CdRBHW=visB2C.reduce((s,r)=>s+r.drrBHW,0), subB2CdRBLR=visB2C.reduce((s,r)=>s+r.drrBLR,0);
+                  const td = (v, bold) => <td style={{ padding: '7px 12px', textAlign: 'right', color: bold ? TEXT : MUTED, fontFamily: MONO, fontSize: 10, fontWeight: bold ? 700 : 400, background: subBg }}>{v ? fmtFull(v) : '—'}</td>;
+                  return (
+                    <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.12)', background: subBg }}>
+                      <td style={{ padding: '7px 12px', color: MUTED, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', position: 'sticky', left: 0, zIndex: 2, background: 'rgba(255,255,255,0.04)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>TOTAL</td>
+                      <td style={{ padding: '7px 10px', position: 'sticky', left: 180, zIndex: 2, background: 'rgba(255,255,255,0.04)', borderRight: '1px solid rgba(255,255,255,0.06)' }} />
+                      {/* Summary subtotals */}
+                      <td style={{ padding: '7px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 10, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,0.08)', background: subBg }}>{fmtFull(subCombSOH)}</td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: subBg }}>{fmtFull(subCombDRR)}</td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subCombDOC} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 10, background: subBg }}>{fmtFull(Math.round(subProjDRR))}</td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg, borderRight: '1px solid rgba(255,255,255,0.08)' }}><SubPill d={subFDOC} /></td>
+                      {/* B2B SOH */}
+                      {td(subB2BSOH, true)}{td(subB2BGDN)}{td(subB2BBHW)}{td(subB2BBLR)}
+                      {/* B2B DOC */}
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg, borderLeft: '1px solid rgba(255,255,255,0.04)' }}><SubPill d={subB2BDOC} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2BdGGN||null} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2BdBHW||null} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2BdBLR||null} /></td>
+                      {/* B2B DRR */}
+                      {td(subB2BDRR, true)}{td(subB2BdRGGN)}{td(subB2BdRBHW)}{td(subB2BdRBLR)}
+                      {/* B2C SOH */}
+                      <td style={{ padding: '7px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: subBg, borderLeft: '1px solid rgba(255,255,255,0.08)' }}>{fmtFull(subB2CSOH)}</td>
+                      {td(subB2CGDN)}{td(subB2CBHW)}{td(subB2CBLR)}
+                      {/* B2C DOC */}
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg, borderLeft: '1px solid rgba(255,255,255,0.04)' }}><SubPill d={subB2CDOC} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2CdGGN||null} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2CdBHW||null} /></td>
+                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2CdBLR||null} /></td>
+                      {/* B2C DRR */}
+                      {td(subB2CDRR, true)}{td(subB2CdRGGN)}{td(subB2CdRBHW)}{td(subB2CdRBLR)}
+                    </tr>
+                  );
+                })()}
                 {visibleRows.map((row, i) => {
                   const b = row.b2b, c = row.b2c;
                   const sColor = SIZE_TABS.find(t => t.id === row.sizeGroup)?.color || MUTED;
