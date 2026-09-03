@@ -139,6 +139,18 @@ export default function App() {
           const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
           return drr > 0 ? soh / drr : 0;
         }
+        if (sortCol === 'sum_fdrr') {
+          const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
+          const mult = row.sizeGroup === '50ml' ? 1.30 : 1.15;
+          return drr * mult;
+        }
+        if (sortCol === 'sum_fdoc') {
+          const soh = (row.b2b?.totalSOH || 0) + (row.b2c?.totalSOH || 0);
+          const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
+          const mult = row.sizeGroup === '50ml' ? 1.30 : 1.15;
+          const projDRR = drr * mult;
+          return projDRR > 0 ? soh / projDRR : 0;
+        }
         // B2B or B2C specific columns
         const [src, ...rest] = sortCol.split('_');
         const col = rest.join('_');
@@ -343,7 +355,7 @@ export default function App() {
               <thead>
                 <tr>
                   <th colSpan={2} style={{ background: BG, position: 'sticky', top: 0, left: 0, zIndex: 4, borderBottom: `1px solid ${BORDER}`, borderRight: '1px solid rgba(255,255,255,0.06)' }} />
-                  <GH label="Summary" cols={3} color="#ffffff" leftBorder />
+                  <GH label="Summary" cols={5} color="#ffffff" leftBorder />
                   <GH label="B2B — SOH" cols={4} color="#e879f9" leftBorder />
                   <GH label="B2B — DOC" cols={4} color="#f5a623" leftBorder />
                   <GH label="B2B — DRR" cols={4} color="#00c896" leftBorder />
@@ -354,9 +366,11 @@ export default function App() {
                 <tr style={{ borderBottom: `1px solid ${BORDER2}` }}>
                   <STH label="Style" col="style" left={0} />
                   <STH label="Size"  col="size"  left={180} />
-                  <TH label="Total SOH"  col="sum_soh" right />
-                  <TH label="Total DRR"  col="sum_drr" right />
-                  <TH label="Total DOC"  col="sum_doc" right />
+                  <TH label="Total SOH"  col="sum_soh"  right />
+                  <TH label="Total DRR"  col="sum_drr"  right />
+                  <TH label="Total DOC"  col="sum_doc"  right />
+                  <TH label="Proj. DRR"  col="sum_fdrr" right />
+                  <TH label="FDOC"       col="sum_fdoc" right />
                   <TH label="Total"  col="b2b_totalSOH" right /><TH label="GGN" col="b2b_sohGGN" right /><TH label="BHW" col="b2b_sohBHW" right /><TH label="BLR" col="b2b_sohBLR" right />
                   <TH label="Total"  col="b2b_totalDOC" right /><TH label="GGN" col="b2b_docGGN" right /><TH label="BHW" col="b2b_docBHW" right /><TH label="BLR" col="b2b_docBLR" right />
                   <TH label="Total"  col="b2b_totalDRR" right /><TH label="GGN" col="b2b_drrGGN" right /><TH label="BHW" col="b2b_drrBHW" right /><TH label="BLR" col="b2b_drrBLR" right />
@@ -381,18 +395,25 @@ export default function App() {
                       <td style={{ padding: '9px 10px', position: 'sticky', left: 180, zIndex: 2, background: i % 2 === 0 ? BG : BG2, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
                         <span style={{ color: sColor, fontFamily: MONO, fontSize: 9, fontWeight: 700, background: `${sColor}15`, border: `1px solid ${sColor}33`, padding: '2px 7px', borderRadius: 10 }}>{row.sizeGroup}</span>
                       </td>
-                      {/* Summary: combined B2B+B2C SOH, DRR, DOC */}
+                      {/* Summary: combined B2B+B2C SOH, DRR, DOC, Proj DRR, FDOC */}
                       {(() => {
                         const combSOH = (b?.totalSOH || 0) + (c?.totalSOH || 0);
                         const combDRR = (b?.totalDRR || 0) + (c?.totalDRR || 0);
                         const combDOC = combDRR > 0 ? combSOH / combDRR : null;
-                        const ds = combDOC ? (!isFinite(combDOC) ? {color:MUTED,bg:'transparent',border:`1px solid rgba(255,255,255,0.08)`} : combDOC<=7 ? {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'} : combDOC<=15 ? {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'} : combDOC<=30 ? {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'} : combDOC<=60 ? {color:'#00c896',bg:'rgba(0,200,150,0.10)',border:'1px solid rgba(0,200,150,0.33)'} : {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'}) : null;
+                        const mult    = row.sizeGroup === '50ml' ? 1.30 : 1.15;
+                        const projDRR = combDRR * mult;
+                        const fDOC    = projDRR > 0 ? combSOH / projDRR : null;
+                        const pillStyle = (d) => !d || !isFinite(d) ? {color:MUTED,bg:'transparent',border:'1px solid rgba(255,255,255,0.08)'} : d<=7 ? {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'} : d<=15 ? {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'} : d<=30 ? {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'} : d<=60 ? {color:'#00c896',bg:'rgba(0,200,150,0.10)',border:'1px solid rgba(0,200,150,0.33)'} : {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'};
+                        const Pill = ({d}) => { const s = pillStyle(d); return d ? <span style={{ background: s.bg, color: s.color, border: s.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em' }}>{Math.round(d)+'d'}</span> : <span style={{ color: MUTED }}>—</span>; };
+                        const cellBg = 'rgba(255,255,255,0.02)';
                         return <>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>{combSOH ? fmtFull(combSOH) : '—'}</td>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, background: 'rgba(255,255,255,0.02)' }}>{combDRR ? fmtFull(combDRR) : '—'}</td>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', background: 'rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
-                            {ds ? <span style={{ background: ds.bg, color: ds.color, border: ds.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em' }}>{combDOC ? Math.round(combDOC)+'d' : '—'}</span> : <span style={{ color: MUTED }}>—</span>}
+                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,0.08)', background: cellBg }}>{combSOH ? fmtFull(combSOH) : '—'}</td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, background: cellBg }}>{combDRR ? fmtFull(combDRR) : '—'}</td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', background: cellBg }}><Pill d={combDOC} /></td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', color: '#a0aab4', fontFamily: MONO, fontSize: 11, background: cellBg }}>
+                            {projDRR ? <span title={`${row.sizeGroup === '50ml' ? '+30%' : '+15%'} on DRR`}>{fmtFull(Math.round(projDRR))}</span> : '—'}
                           </td>
+                          <td style={{ padding: '9px 12px', textAlign: 'right', background: cellBg, borderRight: '1px solid rgba(255,255,255,0.08)' }}><Pill d={fDOC} /></td>
                         </>;
                       })()}
                       {/* B2B SOH */}
