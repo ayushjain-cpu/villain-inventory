@@ -188,6 +188,47 @@ export default function App() {
   const critCnt = merged.filter(r => (r.b2b?.totalDOC > 0 && r.b2b?.totalDOC <= 15) || (r.b2c?.totalDOC > 0 && r.b2c?.totalDOC <= 15)).length;
   const stockCnt = merged.filter(r => !r.b2b?.totalSOH && !r.b2c?.totalSOH).length;
 
+  function downloadCSV() {
+    const headers = [
+      'Style', 'Size',
+      'Total SOH', 'Total DRR', 'Total DOC', 'Proj DRR', 'FDOC',
+      'B2B SOH Total', 'B2B SOH GGN', 'B2B SOH BHW', 'B2B SOH BLR',
+      'B2B DOC Total', 'B2B DOC GGN', 'B2B DOC BHW', 'B2B DOC BLR',
+      'B2B DRR Total', 'B2B DRR GGN', 'B2B DRR BHW', 'B2B DRR BLR',
+      'B2C SOH Total', 'B2C SOH GGN', 'B2C SOH BHW', 'B2C SOH BLR',
+      'B2C DOC Total', 'B2C DOC GGN', 'B2C DOC BHW', 'B2C DOC BLR',
+      'B2C DRR Total', 'B2C DRR GGN', 'B2C DRR BHW', 'B2C DRR BLR',
+    ];
+    const v = (n) => (!n || isNaN(n) || n === 0) ? '' : Math.round(n);
+    const rows = visibleRows.map(row => {
+      const b = row.b2b, c = row.b2c;
+      const combSOH = (b?.totalSOH||0)+(c?.totalSOH||0);
+      const combDRR = (b?.totalDRR||0)+(c?.totalDRR||0);
+      const combDOC = combDRR > 0 ? Math.round(combSOH/combDRR) : '';
+      const mult = row.sizeGroup === '50ml' ? 1.30 : 1.15;
+      const projDRR = Math.round(combDRR * mult);
+      const fDOC = projDRR > 0 ? Math.round(combSOH/projDRR) : '';
+      return [
+        row.style, row.sizeGroup,
+        v(combSOH), v(combDRR), combDOC, v(projDRR), fDOC,
+        v(b?.totalSOH), v(b?.sohGGN), v(b?.sohBHW), v(b?.sohBLR),
+        v(b?.totalDOC), v(b?.docGGN), v(b?.docBHW), v(b?.docBLR),
+        v(b?.totalDRR), v(b?.drrGGN), v(b?.drrBHW), v(b?.drrBLR),
+        v(c?.totalSOH), v(c?.sohGGN), v(c?.sohBHW), v(c?.sohBLR),
+        v(c?.totalDOC), v(c?.docGGN), v(c?.docBHW), v(c?.docBLR),
+        v(c?.totalDRR), v(c?.drrGGN), v(c?.drrBHW), v(c?.drrBLR),
+      ];
+    });
+    const csv = [headers, ...rows].map(r => r.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `villain_inventory_${sizeTab.replace(' ','_').toLowerCase()}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function toggleSort(col) {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortCol(col); setSortDir('asc'); }
@@ -360,6 +401,9 @@ export default function App() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search style..."
               style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '7px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT, width: 220 }} />
             <span style={{ color: MUTED, fontSize: 12 }}>{visibleRows.length} / {merged.length} SKUs</span>
+            <button onClick={downloadCSV} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '6px 14px', color: MUTED, fontSize: 11, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
+              ↓ Export CSV
+            </button>
           </div>
 
           {/* Table */}
