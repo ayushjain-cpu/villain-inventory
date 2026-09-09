@@ -96,7 +96,8 @@ export default async function handler(req, res) {
       .filter(r => {
         const status = (r[iStatus] || '').trim().toLowerCase();
         const actualDate = (r[iActual] || '').trim().slice(0, 10); // take YYYY-MM-DD part
-        return status === 'delivered' && actualDate === todayIST;
+        const yesterdayIST = new Date(now.getTime() + istOffset - 86400000).toISOString().slice(0, 10);
+        return status === 'delivered' && (actualDate === todayIST || actualDate === yesterdayIST);
       })
       .map(r => ({
         style:      r[iStyle].trim(),
