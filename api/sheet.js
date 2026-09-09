@@ -5,63 +5,101 @@ export default async function handler(req, res) {
   const SHEET_ID = process.env.GOOGLE_SHEET_ID || '1rRJPFefx_fKLeqJIlsQgu9GKTqimGJhC8GNGPchij-A';
   const B2B_GID  = '1352994444';
   const B2C_GID  = '1431205073';
-
-  // B2B: 0=Style, 1=EAN, 2=Channel Tagging, 3=TotalSOH, 4=GGN, 5=BHW, 6=BLR, 7=TotalDRR, 8=GGN, 9=BHW, 10=BLR, 11=TotalDOC, 12=GGN, 13=BHW, 14=BLR, 15=TotalIntransit, 16=GGN, 17=BHW, 18=BLR, 19=DocInt, 20=GGN, 21=BHW, 22=BLR
-  // B2C: 0=Style, 1=EAN, NO channel, 2=TotalSOH, 3=GGN, 4=BHW, 5=BLR, 6=TotalDRR, 7=GGN, 8=BHW, 9=BLR, 10=TotalDOC, 11=GGN, 12=BHW, 13=BLR, 14=TotalIntransit, 15=GGN, 16=BHW, 17=BLR, 18=DocInt, 19=GGN, 20=BHW, 21=BLR
+  const ASN_GID  = '635966600';
 
   function parseRow(r, hasChannel) {
-    const o = hasChannel ? 1 : 0; // offset
+    const o = hasChannel ? 1 : 0;
     return {
       style:          r[0].trim(),
       ean:            (r[1] || '').trim(),
       channelTag:     hasChannel ? (r[2] || '').trim() : null,
-      totalSOH:       n(r[2 + o]),
-      sohGGN:         n(r[3 + o]),
-      sohBHW:         n(r[4 + o]),
-      sohBLR:         n(r[5 + o]),
-      totalDRR:       n(r[6 + o]),
-      drrGGN:         n(r[7 + o]),
-      drrBHW:         n(r[8 + o]),
-      drrBLR:         n(r[9 + o]),
-      totalDOC:       n(r[10 + o]),
-      docGGN:         n(r[11 + o]),
-      docBHW:         n(r[12 + o]),
-      docBLR:         n(r[13 + o]),
-      totalIntransit: n(r[14 + o]),
-      intGGN:         n(r[15 + o]),
-      intBHW:         n(r[16 + o]),
-      intBLR:         n(r[17 + o]),
-      docIntTotal:    n(r[18 + o]),
-      docIntGGN:      n(r[19 + o]),
-      docIntBHW:      n(r[20 + o]),
-      docIntBLR:      n(r[21 + o]),
+      totalSOH:       n(r[2 + o]), sohGGN: n(r[3 + o]), sohBHW: n(r[4 + o]), sohBLR: n(r[5 + o]),
+      totalDRR:       n(r[6 + o]), drrGGN: n(r[7 + o]), drrBHW: n(r[8 + o]), drrBLR: n(r[9 + o]),
+      totalDOC:       n(r[10 + o]), docGGN: n(r[11 + o]), docBHW: n(r[12 + o]), docBLR: n(r[13 + o]),
+      totalIntransit: n(r[14 + o]), intGGN: n(r[15 + o]), intBHW: n(r[16 + o]), intBLR: n(r[17 + o]),
+      docIntTotal:    n(r[18 + o]), docIntGGN: n(r[19 + o]), docIntBHW: n(r[20 + o]), docIntBLR: n(r[21 + o]),
     };
   }
 
-  async function fetchTab(gid, hasChannel) {
+  async function fetchInventoryTab(gid, hasChannel) {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Sheet fetch failed: ${response.status}`);
     const csvText = await response.text();
     const lines = csvText.trim().split('\n');
-
-    if (req.query.debug) {
-      return { headers: parseCSVLine(lines[2]), row4: parseCSVLine(lines[3]) };
-    }
-
-    return lines.slice(3)
-      .map(line => parseCSVLine(line))
+    if (req.query.debug) return { headers: parseCSVLine(lines[2]), row4: parseCSVLine(lines[3]) };
+    return lines.slice(3).map(line => parseCSVLine(line))
       .filter(r => r[0] && r[0].trim() !== '')
       .map(r => parseRow(r, hasChannel));
   }
 
+  async function fetchASN() {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${ASN_GID}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`ASN fetch failed: ${response.status}`);
+    const csvText = await response.text();
+    const lines = csvText.trim().split('\n');
+    const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+
+    if (req.query.debug_asn) {
+      return { headers, row1: parseCSVLine(lines[1]), row2: parseCSVLine(lines[2]) };
+    }
+
+    // Find column indices by name
+    const idx = (name) => headers.findIndex(h => h.includes(name.toLowerCase()));
+    const iStyle    = idx('sku_style_id');
+    const iWH       = idx('warehouse_location');
+    const iEDD      = idx('expected_delivery_date');
+    const iQty      = idx('packing_list_qty');
+    const iStatus   = idx('asn_status');
+
+    const VALID_STATUSES = ['approved', 'dispatched', 'ops_approval_pending'];
+
+    // Parse and filter rows
+    const rows = lines.slice(1)
+      .map(line => parseCSVLine(line))
+      .filter(r => {
+        const status = (r[iStatus] || '').trim().toLowerCase();
+        return VALID_STATUSES.includes(status) && r[iStyle] && r[iStyle].trim();
+      })
+      .map(r => ({
+        style:    r[iStyle].trim(),
+        wh:       (r[iWH] || '').trim(),
+        edd:      (r[iEDD] || '').trim(),
+        qty:      n(r[iQty]),
+        status:   (r[iStatus] || '').trim(),
+      }));
+
+    // Dedupe at style x wh x edd level — sum qty for duplicates
+    const map = {};
+    rows.forEach(r => {
+      const key = `${r.style}||${r.wh}||${r.edd}`;
+      if (map[key]) {
+        map[key].qty += r.qty;
+      } else {
+        map[key] = { ...r };
+      }
+    });
+
+    return Object.values(map).sort((a, b) => {
+      if (a.style !== b.style) return a.style.localeCompare(b.style);
+      if (a.edd !== b.edd) return a.edd.localeCompare(b.edd);
+      return a.wh.localeCompare(b.wh);
+    });
+  }
+
   try {
-    const [b2b, b2c] = await Promise.all([
-      fetchTab(B2B_GID, true),
-      fetchTab(B2C_GID, false)
+    if (req.query.debug_asn) {
+      const asn = await fetchASN();
+      return res.status(200).json({ asn });
+    }
+    const [b2b, b2c, asn] = await Promise.all([
+      fetchInventoryTab(B2B_GID, true),
+      fetchInventoryTab(B2C_GID, false),
+      fetchASN(),
     ]);
     if (req.query.debug) return res.status(200).json({ b2b, b2c });
-    res.status(200).json({ b2b, b2c, updatedAt: new Date().toISOString() });
+    res.status(200).json({ b2b, b2c, asn, updatedAt: new Date().toISOString() });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
