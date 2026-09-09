@@ -59,7 +59,7 @@ const SIZE_TABS = [
   {id:'20ml',         label:'20ml',           emoji:'🟡', color:'#f5a623'},
   {id:'Gift Packs',   label:'Gift Packs',     emoji:'🎁', color:'#7c5cfc'},
   {id:'ASN',          label:'ASN',            emoji:'🚚', color:'#00bcd4'},
-  {id:'ASN_DELIVERED',label:'Delivered Today',emoji:'✅', color:'#00e676'},
+  {id:'ASN_DELIVERED',label:'Recently Delivered',emoji:'✅', color:'#00e676'},
 ];
 
 export default function App() {
@@ -202,7 +202,7 @@ export default function App() {
         {/* WH cards */}
         <div style={{display:'flex',gap:8,marginBottom:12,flexShrink:0,flexWrap:'wrap'}}>
           <div style={{background:'rgba(255,255,255,0.03)',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1}}>
-            <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{sizeTab==='ASN'?'Total Inbound':'Delivered Today'}</div>
+            <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{sizeTab==='ASN'?'Total Inbound':'Recently Delivered'}</div>
             <div style={{fontSize:20,fontWeight:700,color:accentColor,fontFamily:MONO}}>{totalQty.toLocaleString('en-IN')}</div>
             <div style={{fontSize:10,color:MUTED,marginTop:3}}>{rows.length} lines · {new Set(rows.map(r=>r.style)).size} SKUs</div>
           </div>
