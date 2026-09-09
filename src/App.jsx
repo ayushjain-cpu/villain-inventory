@@ -92,6 +92,7 @@ export default function App() {
   const [chatLoading, setChatLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
   const [listening, setListening] = useState(false);
+  const [asnSearch, setAsnSearch] = useState('');
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -409,62 +410,81 @@ export default function App() {
 
           {/* Table or ASN view */}
           {sizeTab === 'ASN' ? (
-            <div style={{ flex: 1, overflow: 'auto', padding: '0 20px 16px' }}>
-              {/* ASN Summary cards */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                {[
-                  { label: 'Total Lines', value: data.asn.length, sub: 'unique SKU × WH × EDD' },
-                  { label: 'Total Qty', value: data.asn.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN'), sub: 'packing list qty' },
-                  { label: 'Unique SKUs', value: new Set(data.asn.map(r=>r.style)).size, sub: 'distinct styles' },
-                  { label: 'Warehouses', value: [...new Set(data.asn.map(r=>r.wh))].join(', ') || '—', sub: 'receiving locations' },
-                ].map(c => (
-                  <div key={c.label} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                    <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{c.label}</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{c.value}</div>
-                    <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{c.sub}</div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 20px 16px' }}>
+              {/* WH-level cards */}
+              {(() => {
+                const whs = [...new Set(data.asn.map(r => r.wh))].filter(Boolean).sort();
+                const totalQty = data.asn.reduce((s,r) => s+r.qty, 0);
+                return (
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexShrink: 0, flexWrap: 'wrap' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
+                      <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>Total Inbound</div>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{totalQty.toLocaleString('en-IN')}</div>
+                      <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{data.asn.length} lines · {new Set(data.asn.map(r=>r.style)).size} SKUs</div>
+                    </div>
+                    {whs.map(wh => {
+                      const whRows = data.asn.filter(r => r.wh === wh);
+                      return (
+                        <div key={wh} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
+                          <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{wh.replace('wms_','').replace(/_offline/i,'')}</div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{whRows.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN')}</div>
+                          <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{whRows.length} lines · {new Set(whRows.map(r=>r.style)).size} SKUs</div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                );
+              })()}
+              {/* Search */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexShrink: 0 }}>
+                <input value={asnSearch} onChange={e => setAsnSearch(e.target.value)} placeholder="Search style..."
+                  style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '7px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT, width: 220 }} />
+                <span style={{ color: MUTED, fontSize: 12 }}>
+                  {data.asn.filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase())).length} / {data.asn.length} lines
+                </span>
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                <thead>
-                  <tr>
-                    {[
-                      { label: 'Style / SKU', col: 'style' },
-                      { label: 'Warehouse', col: 'wh' },
-                      { label: 'Expected Delivery', col: 'edd' },
-                      { label: 'Status', col: 'status' },
-                      { label: 'Qty', col: 'qty', right: true },
-                    ].map(h => (
-                      <th key={h.col} style={{ padding: '10px 14px', textAlign: h.right ? 'right' : 'left', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>{h.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.asn.map((r, i) => {
-                    const statusColor = r.status.toLowerCase() === 'dispatched' ? '#00c896' : r.status.toLowerCase() === 'approved' ? '#e879f9' : '#f5a623';
-                    const today = new Date(); const edd = new Date(r.edd);
-                    const daysOut = isNaN(edd) ? null : Math.ceil((edd - today) / 86400000);
-                    const eddColor = daysOut === null ? MUTED : daysOut < 0 ? '#ff4444' : daysOut <= 3 ? '#f5a623' : '#00c896';
-                    return (
-                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)', transition: 'background 0.1s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,188,212,0.05)'}
-                        onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
-                      >
-                        <td style={{ padding: '9px 14px', color: TEXT2, fontWeight: 600, fontSize: 12 }}>{r.style}</td>
-                        <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh || '—'}</td>
-                        <td style={{ padding: '9px 14px', fontFamily: MONO, fontSize: 11 }}>
-                          <span style={{ color: eddColor }}>{r.edd || '—'}</span>
-                          {daysOut !== null && <span style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>{daysOut < 0 ? `${Math.abs(daysOut)}d overdue` : daysOut === 0 ? 'today' : `in ${daysOut}d`}</span>}
-                        </td>
-                        <td style={{ padding: '9px 14px' }}>
-                          <span style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44`, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{r.status}</span>
-                        </td>
-                        <td style={{ padding: '9px 14px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{r.qty.toLocaleString('en-IN')}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* Table */}
+              <div style={{ flex: 1, overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr>
+                      {['Style / SKU', 'Warehouse', 'Expected Delivery', 'Status'].map(h => (
+                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>{h}</th>
+                      ))}
+                      <th style={{ padding: '10px 14px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.asn
+                      .filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase()))
+                      .map((r, i) => {
+                        const statusColor = r.status.toLowerCase() === 'dispatched' ? '#00c896' : r.status.toLowerCase() === 'approved' ? '#e879f9' : '#f5a623';
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const edd = new Date(r.edd); 
+                        const daysOut = isNaN(edd) ? null : Math.ceil((edd - today) / 86400000);
+                        const eddColor = daysOut === null ? MUTED : daysOut < 0 ? '#ff4444' : daysOut <= 3 ? '#f5a623' : '#00c896';
+                        const rowBg = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)';
+                        return (
+                          <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: rowBg, transition: 'background 0.1s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,188,212,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.background = rowBg}
+                          >
+                            <td style={{ padding: '9px 14px', color: TEXT2, fontWeight: 600, fontSize: 12 }}>{r.style}</td>
+                            <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh.replace('wms_','').replace(/_offline/i,'') || '—'}</td>
+                            <td style={{ padding: '9px 14px', fontFamily: MONO, fontSize: 11 }}>
+                              <span style={{ color: eddColor }}>{r.edd || '—'}</span>
+                              {daysOut !== null && <span style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>{daysOut < 0 ? `${Math.abs(daysOut)}d overdue` : daysOut === 0 ? 'today' : `in ${daysOut}d`}</span>}
+                            </td>
+                            <td style={{ padding: '9px 14px' }}>
+                              <span style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44`, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{r.status}</span>
+                            </td>
+                            <td style={{ padding: '9px 14px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{r.qty.toLocaleString('en-IN')}</td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
           <div style={{ flex: 1, overflow: 'auto', padding: '0 20px 16px' }}>
