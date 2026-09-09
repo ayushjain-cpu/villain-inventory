@@ -426,7 +426,7 @@ export default function App() {
                       const whRows = data.asn.filter(r => r.wh === wh);
                       return (
                         <div key={wh} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                          <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{wh.replace('wms_','').replace(/_offline/i,'')}</div>
+                          <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{wh}</div>
                           <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{whRows.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN')}</div>
                           <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{whRows.length} lines · {new Set(whRows.map(r=>r.style)).size} SKUs</div>
                         </div>
@@ -470,7 +470,7 @@ export default function App() {
                             onMouseLeave={e => e.currentTarget.style.background = rowBg}
                           >
                             <td style={{ padding: '9px 14px', color: TEXT2, fontWeight: 600, fontSize: 12 }}>{r.style}</td>
-                            <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh.replace('wms_','').replace(/_offline/i,'') || '—'}</td>
+                            <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh || '—'}</td>
                             <td style={{ padding: '9px 14px', fontFamily: MONO, fontSize: 11 }}>
                               <span style={{ color: eddColor }}>{r.edd || '—'}</span>
                               {daysOut !== null && <span style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>{daysOut < 0 ? `${Math.abs(daysOut)}d overdue` : daysOut === 0 ? 'today' : `in ${daysOut}d`}</span>}
