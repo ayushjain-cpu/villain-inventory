@@ -76,10 +76,11 @@ const SIZE_TABS = [
   { id: '50ml',       label: '50ml',       emoji: '🟢', color: '#00c896' },
   { id: '20ml',       label: '20ml',       emoji: '🟡', color: '#f5a623' },
   { id: 'Gift Packs', label: 'Gift Packs', emoji: '🎁', color: '#7c5cfc' },
+  { id: 'ASN',        label: 'ASN',        emoji: '🚚', color: '#00bcd4' },
 ];
 
 export default function App() {
-  const [data, setData]           = useState({ b2b: [], b2c: [] });
+  const [data, setData]           = useState({ b2b: [], b2c: [], asn: [] });
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
   const [sizeTab, setSizeTab]     = useState('All');
@@ -104,7 +105,7 @@ export default function App() {
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setData({ b2b: json.b2b || [], b2c: json.b2c || [] });
+      setData({ b2b: json.b2b || [], b2c: json.b2c || [], asn: json.asn || [] });
       const now = new Date(json.updatedAt);
       setLastUpdated(`${now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`);
     } catch (e) { setError(e.message); }
@@ -350,7 +351,7 @@ export default function App() {
         {/* Size tabs — exact MyFitness tab style */}
         <div style={{ display: 'flex', gap: 2 }}>
           {SIZE_TABS.map(t => {
-            const count = t.id === 'All' ? merged.length : merged.filter(r => r.sizeGroup === t.id).length;
+            const count = t.id === 'All' ? merged.length : t.id === 'ASN' ? data.asn.length : merged.filter(r => r.sizeGroup === t.id).length;
             return (
               <button key={t.id} onClick={() => { setSizeTab(t.id); setSearch(''); setSortCol('b2b_totalDOC'); setSortDir('asc'); }}
                 style={{ padding: '9px 18px', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, borderRadius: '7px 7px 0 0', background: sizeTab === t.id ? 'rgba(255,255,255,0.06)' : 'transparent', color: sizeTab === t.id ? t.color : MUTED, borderBottom: sizeTab === t.id ? `2px solid ${t.color}` : '2px solid transparent', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -406,7 +407,66 @@ export default function App() {
             </button>
           </div>
 
-          {/* Table */}
+          {/* Table or ASN view */}
+          {sizeTab === 'ASN' ? (
+            <div style={{ flex: 1, overflow: 'auto', padding: '0 20px 16px' }}>
+              {/* ASN Summary cards */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                {[
+                  { label: 'Total Lines', value: data.asn.length, sub: 'unique SKU × WH × EDD' },
+                  { label: 'Total Qty', value: data.asn.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN'), sub: 'packing list qty' },
+                  { label: 'Unique SKUs', value: new Set(data.asn.map(r=>r.style)).size, sub: 'distinct styles' },
+                  { label: 'Warehouses', value: [...new Set(data.asn.map(r=>r.wh))].join(', ') || '—', sub: 'receiving locations' },
+                ].map(c => (
+                  <div key={c.label} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
+                    <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{c.label}</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{c.value}</div>
+                    <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{c.sub}</div>
+                  </div>
+                ))}
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    {[
+                      { label: 'Style / SKU', col: 'style' },
+                      { label: 'Warehouse', col: 'wh' },
+                      { label: 'Expected Delivery', col: 'edd' },
+                      { label: 'Status', col: 'status' },
+                      { label: 'Qty', col: 'qty', right: true },
+                    ].map(h => (
+                      <th key={h.col} style={{ padding: '10px 14px', textAlign: h.right ? 'right' : 'left', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>{h.label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.asn.map((r, i) => {
+                    const statusColor = r.status.toLowerCase() === 'dispatched' ? '#00c896' : r.status.toLowerCase() === 'approved' ? '#e879f9' : '#f5a623';
+                    const today = new Date(); const edd = new Date(r.edd);
+                    const daysOut = isNaN(edd) ? null : Math.ceil((edd - today) / 86400000);
+                    const eddColor = daysOut === null ? MUTED : daysOut < 0 ? '#ff4444' : daysOut <= 3 ? '#f5a623' : '#00c896';
+                    return (
+                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)', transition: 'background 0.1s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,188,212,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
+                      >
+                        <td style={{ padding: '9px 14px', color: TEXT2, fontWeight: 600, fontSize: 12 }}>{r.style}</td>
+                        <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh || '—'}</td>
+                        <td style={{ padding: '9px 14px', fontFamily: MONO, fontSize: 11 }}>
+                          <span style={{ color: eddColor }}>{r.edd || '—'}</span>
+                          {daysOut !== null && <span style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>{daysOut < 0 ? `${Math.abs(daysOut)}d overdue` : daysOut === 0 ? 'today' : `in ${daysOut}d`}</span>}
+                        </td>
+                        <td style={{ padding: '9px 14px' }}>
+                          <span style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44`, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{r.status}</span>
+                        </td>
+                        <td style={{ padding: '9px 14px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{r.qty.toLocaleString('en-IN')}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
           <div style={{ flex: 1, overflow: 'auto', padding: '0 20px 16px' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
@@ -556,8 +616,8 @@ export default function App() {
               </tbody>
             </table>
           </div>
-
-          {/* Legend */}
+          )}{/* end ternary */}
+          {sizeTab !== 'ASN' && (
           <div style={{ display: 'flex', gap: 14, padding: '0 20px 12px', flexWrap: 'wrap', flexShrink: 0 }}>
             {[['≤7d Critical', '#ff4444'], ['≤15d Low', '#f5a623'], ['≤30d', '#f5c518'], ['≤60d Healthy', '#00c896'], ['>60d Overstock', '#7c5cfc']].map(([l, c]) => (
               <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: MONO, fontSize: 9, color: MUTED }}>
@@ -565,6 +625,7 @@ export default function App() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Right: chat — exact MyFitness */}
