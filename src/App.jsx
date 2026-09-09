@@ -371,7 +371,7 @@ export default function App() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${BORDER}` }}>
 
           {/* Cards — exact MyFitness gap/padding */}
-          <div style={{ display: 'flex', gap: 8, padding: '10px 20px', flexShrink: 0 }}>
+          {sizeTab !== 'ASN' && <div style={{ display: 'flex', gap: 8, padding: '10px 20px', flexShrink: 0 }}>
             {[
               { label: 'Total SOH', b2bVal: fmtFull(b2bSOH), b2cVal: fmtFull(b2cSOH), b2bColor: tab.color, b2cColor: '#00c896', sub: `${allB2B.length} B2B · ${allB2C.length} B2C SKUs` },
               { label: 'Total DRR', b2bVal: fmtFull(b2bDRR), b2cVal: fmtFull(b2cDRR), b2bColor: TEXT, b2cColor: TEXT, sub: 'daily run rate' },
@@ -396,17 +396,17 @@ export default function App() {
                 <div style={{ fontSize: 10, color: c.label.includes('DOC') && critCnt > 0 ? '#ff4444' : MUTED, marginTop: 2 }}>{c.sub}</div>
               </div>
             ))}
-          </div>
+          </div>}
 
           {/* Search */}
-          <div style={{ padding: '0 20px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          {sizeTab !== 'ASN' && <div style={{ padding: '0 20px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search style..."
               style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '7px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT, width: 220 }} />
             <span style={{ color: MUTED, fontSize: 12 }}>{visibleRows.length} / {merged.length} SKUs</span>
             <button onClick={downloadCSV} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '6px 14px', color: MUTED, fontSize: 11, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
               ↓ Export CSV
             </button>
-          </div>
+          </div>}
 
           {/* Table or ASN view */}
           {sizeTab === 'ASN' ? (
@@ -460,8 +460,8 @@ export default function App() {
                       .map((r, i) => {
                         const statusColor = r.status.toLowerCase() === 'dispatched' ? '#00c896' : r.status.toLowerCase() === 'approved' ? '#e879f9' : '#f5a623';
                         const today = new Date(); today.setHours(0,0,0,0);
-                        const edd = new Date(r.edd); 
-                        const daysOut = isNaN(edd) ? null : Math.ceil((edd - today) / 86400000);
+                        const edd = new Date(r.edd); edd.setHours(0,0,0,0);
+                        const daysOut = isNaN(edd.getTime()) ? null : Math.round((edd - today) / 86400000);
                         const eddColor = daysOut === null ? MUTED : daysOut < 0 ? '#ff4444' : daysOut <= 3 ? '#f5a623' : '#00c896';
                         const rowBg = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)';
                         return (
