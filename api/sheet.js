@@ -13,11 +13,11 @@ export default async function handler(req, res) {
       style:          r[0].trim(),
       ean:            (r[1] || '').trim(),
       channelTag:     hasChannel ? (r[2] || '').trim() : null,
-      totalSOH:       n(r[2 + o]), sohGGN: n(r[3 + o]), sohBHW: n(r[4 + o]), sohBLR: n(r[5 + o]),
-      totalDRR:       n(r[6 + o]), drrGGN: n(r[7 + o]), drrBHW: n(r[8 + o]), drrBLR: n(r[9 + o]),
-      totalDOC:       n(r[10 + o]), docGGN: n(r[11 + o]), docBHW: n(r[12 + o]), docBLR: n(r[13 + o]),
-      totalIntransit: n(r[14 + o]), intGGN: n(r[15 + o]), intBHW: n(r[16 + o]), intBLR: n(r[17 + o]),
-      docIntTotal:    n(r[18 + o]), docIntGGN: n(r[19 + o]), docIntBHW: n(r[20 + o]), docIntBLR: n(r[21 + o]),
+      totalSOH:       n(r[2+o]), sohGGN: n(r[3+o]), sohBHW: n(r[4+o]), sohBLR: n(r[5+o]),
+      totalDRR:       n(r[6+o]), drrGGN: n(r[7+o]), drrBHW: n(r[8+o]), drrBLR: n(r[9+o]),
+      totalDOC:       n(r[10+o]), docGGN: n(r[11+o]), docBHW: n(r[12+o]), docBLR: n(r[13+o]),
+      totalIntransit: n(r[14+o]), intGGN: n(r[15+o]), intBHW: n(r[16+o]), intBLR: n(r[17+o]),
+      docIntTotal:    n(r[18+o]), docIntGGN: n(r[19+o]), docIntBHW: n(r[20+o]), docIntBLR: n(r[21+o]),
     };
   }
 
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const csvText = await response.text();
     const lines = csvText.trim().split('\n');
     if (req.query.debug) return { headers: parseCSVLine(lines[2]), row4: parseCSVLine(lines[3]) };
-    return lines.slice(3).map(line => parseCSVLine(line))
+    return lines.slice(3).map(l => parseCSVLine(l))
       .filter(r => r[0] && r[0].trim() !== '')
       .map(r => parseRow(r, hasChannel));
   }
@@ -39,59 +39,66 @@ export default async function handler(req, res) {
     if (!response.ok) throw new Error(`ASN fetch failed: ${response.status}`);
     const csvText = await response.text();
     const lines = csvText.trim().split('\n');
+
+    // Row 1 = headers (index 0)
     const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
 
     if (req.query.debug_asn) {
-      return { headers, row1: parseCSVLine(lines[1]), row2: parseCSVLine(lines[2]) };
+      // Show unique asn_status values so we can see what's in the data
+      const iStatus = headers.indexOf('asn_status');
+      const iStyle  = headers.indexOf('sku_style_id');
+      const statusVals = [...new Set(
+        lines.slice(1).map(l => parseCSVLine(l)[iStatus] || '').filter(Boolean)
+      )];
+      return {
+        headers,
+        totalRows: lines.length - 1,
+        uniqueStatuses: statusVals,
+        row1: parseCSVLine(lines[1]),
+        row2: parseCSVLine(lines[2]),
+      };
     }
 
-    // Find column indices by name
-    const idx = (name) => headers.findIndex(h => h.includes(name.toLowerCase()));
-    const iStyle    = idx('sku_style_id');
-    const iWH       = idx('warehouse_location');
-    const iEDD      = idx('expected_delivery_date');
-    const iQty      = idx('packing_list_qty');
-    const iStatus   = idx('asn_status');
+    const iStatus = headers.indexOf('asn_status');
+    const iStyle  = headers.indexOf('sku_style_id');
+    const iWH     = headers.indexOf('warehouse_location');
+    const iEDD    = headers.indexOf('expected_delivery_date');
+    const iQty    = headers.indexOf('packing_list_qty');
 
-    const VALID_STATUSES = ['approved', 'dispatched', 'ops_approval_pending'];
+    const VALID = new Set(['approved', 'dispatched', 'ops_approval_pending']);
 
-    // Parse and filter rows
     const rows = lines.slice(1)
-      .map(line => parseCSVLine(line))
+      .map(l => parseCSVLine(l))
       .filter(r => {
         const status = (r[iStatus] || '').trim().toLowerCase();
-        return VALID_STATUSES.includes(status) && r[iStyle] && r[iStyle].trim();
+        return VALID.has(status) && r[iStyle] && r[iStyle].trim();
       })
       .map(r => ({
-        style:    r[iStyle].trim(),
-        wh:       (r[iWH] || '').trim(),
-        edd:      (r[iEDD] || '').trim(),
-        qty:      n(r[iQty]),
-        status:   (r[iStatus] || '').trim(),
+        style:  r[iStyle].trim(),
+        wh:     (r[iWH] || '').trim(),
+        edd:    (r[iEDD] || '').trim(),
+        qty:    n(r[iQty]),
+        status: (r[iStatus] || '').trim().toUpperCase(),
       }));
 
-    // Dedupe at style x wh x edd level — sum qty for duplicates
+    // Dedupe at style × wh × edd — sum qty
     const map = {};
     rows.forEach(r => {
       const key = `${r.style}||${r.wh}||${r.edd}`;
-      if (map[key]) {
-        map[key].qty += r.qty;
-      } else {
-        map[key] = { ...r };
-      }
+      if (map[key]) map[key].qty += r.qty;
+      else map[key] = { ...r };
     });
 
-    return Object.values(map).sort((a, b) => {
-      if (a.style !== b.style) return a.style.localeCompare(b.style);
-      if (a.edd !== b.edd) return a.edd.localeCompare(b.edd);
-      return a.wh.localeCompare(b.wh);
-    });
+    return Object.values(map).sort((a, b) =>
+      a.style !== b.style ? a.style.localeCompare(b.style) :
+      a.edd !== b.edd ? a.edd.localeCompare(b.edd) :
+      a.wh.localeCompare(b.wh)
+    );
   }
 
   try {
     if (req.query.debug_asn) {
-      const asn = await fetchASN();
-      return res.status(200).json({ asn });
+      return res.status(200).json(await fetchASN());
     }
     const [b2b, b2c, asn] = await Promise.all([
       fetchInventoryTab(B2B_GID, true),
