@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 
-// ── Exact MyFitness values ────────────────────────────────────────────────────
 const BG      = '#0b0f14';
 const BG2     = '#0f1419';
 const BORDER  = 'rgba(255,255,255,0.06)';
@@ -12,92 +11,75 @@ const DIM     = '#a0aab4';
 const FONT    = "'DM Sans', sans-serif";
 const MONO    = 'monospace';
 
-// ── SKU size classification ───────────────────────────────────────────────────
 function getSizeGroup(style) {
   const s = style.toLowerCase();
-  // Gift packs first (before size check)
   if (['am_pm','combo','pack_of','collection','aura_30','partycombo','heist_combo','rebel_perfume','7_deadly','party_combo'].some(k => s.includes(k))) return 'Gift Packs';
-  if (s.includes('100ml') || s.includes('100 ml') || s.includes('reign') || s.includes('voltage') || s.includes('on_the_rocks') || s.includes('gold_revol') || s.includes('smoked_oud') || s.includes('white_oud') || s.includes('golden_oud') || s.includes('bukhoor') || s.includes('azure') || s.includes('midnight') || s.includes('desire')) return '100ml';
-  if (s.includes('50ml') || s.includes('tempt') || s.includes('legacy') || s.includes('hurricane') || s.includes('unstoppable') || s.includes('exotic_oud')) return '50ml';
-  if (s.includes('20ml') || s.includes('snakeedp_20') || s.includes('hydraedp_20') || s.includes('oudedp_20') || s.includes('edp_20')) return '20ml';
+  if (s.includes('100ml')||s.includes('100 ml')||s.includes('reign')||s.includes('voltage')||s.includes('on_the_rocks')||s.includes('gold_revol')||s.includes('smoked_oud')||s.includes('white_oud')||s.includes('golden_oud')||s.includes('bukhoor')||s.includes('azure')||s.includes('midnight')||s.includes('desire')) return '100ml';
+  if (s.includes('50ml')||s.includes('tempt')||s.includes('legacy')||s.includes('hurricane')||s.includes('unstoppable')||s.includes('exotic_oud')) return '50ml';
+  if (s.includes('20ml')||s.includes('snakeedp_20')||s.includes('hydraedp_20')||s.includes('oudedp_20')||s.includes('edp_20')) return '20ml';
   if (s.includes('100')) return '100ml';
   if (s.includes('50')) return '50ml';
   if (s.includes('20')) return '20ml';
   return '100ml';
 }
 
-function fmt(v) {
-  if (!v || isNaN(v) || v === 0) return '—';
-  if (v >= 1000) return (v / 1000).toFixed(v >= 100000 ? 0 : 1) + 'k';
-  return String(Math.round(v));
-}
-function fmtFull(v) {
-  if (!v || isNaN(v) || v === 0) return '—';
-  return Math.round(v).toLocaleString('en-IN');
-}
-function fmtDoc(v) {
-  if (!v || isNaN(v) || !isFinite(v) || v === 0) return '—';
-  return Math.round(v) + 'd';
-}
-function docStatus(doc) {
-  if (!doc || !isFinite(doc) || doc === 0) return { label: '—', color: MUTED, bg: 'transparent', border: `1px solid rgba(255,255,255,0.08)` };
-  if (doc <= 7)  return { label: 'Critical', color: '#ff4444', bg: 'rgba(255,68,68,0.12)',   border: '1px solid rgba(255,68,68,0.33)' };
-  if (doc <= 15) return { label: 'Low',      color: '#f5a623', bg: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.33)' };
-  if (doc <= 30) return { label: 'Low',      color: '#f5c518', bg: 'rgba(245,197,24,0.10)', border: '1px solid rgba(245,197,24,0.33)' };
-  if (doc <= 60) return { label: 'OK',       color: '#00c896', bg: 'rgba(0,200,150,0.10)',  border: '1px solid rgba(0,200,150,0.33)' };
-  return           { label: 'OK',       color: '#7c5cfc', bg: 'rgba(124,92,252,0.10)', border: '1px solid rgba(124,92,252,0.33)' };
+function fmt(v) { if (!v||isNaN(v)||v===0) return '—'; if (v>=1000) return (v/1000).toFixed(v>=100000?0:1)+'k'; return String(Math.round(v)); }
+function fmtFull(v) { if (!v||isNaN(v)||v===0) return '—'; return Math.round(v).toLocaleString('en-IN'); }
+function fmtDoc(v) { if (!v||isNaN(v)||!isFinite(v)||v===0) return '—'; return Math.round(v)+'d'; }
+
+function docPillStyle(doc) {
+  if (!doc||!isFinite(doc)||doc===0) return {color:MUTED,bg:'transparent',border:'1px solid rgba(255,255,255,0.08)'};
+  if (doc<=7)  return {color:'#ff4444',bg:'rgba(255,68,68,0.12)',  border:'1px solid rgba(255,68,68,0.33)'};
+  if (doc<=15) return {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'};
+  if (doc<=30) return {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'};
+  if (doc<=60) return {color:'#00c896',bg:'rgba(0,200,150,0.10)', border:'1px solid rgba(0,200,150,0.33)'};
+  return          {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'};
 }
 
-// ── Card — exact MyFitness ────────────────────────────────────────────────────
+function DocPill({ v }) {
+  const s = docPillStyle(v);
+  if (!v||v===0) return <span style={{color:MUTED,fontFamily:MONO,fontSize:11,fontWeight:700}}>—</span>;
+  return <span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em',whiteSpace:'nowrap'}}>{fmtDoc(v)}</span>;
+}
+
 function Card({ label, value, sub, accent }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-      <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: accent || TEXT, fontFamily: MONO }}>{value}</div>
-      {sub !== undefined && <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{sub}</div>}
+    <div style={{background:'rgba(255,255,255,0.03)',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1}}>
+      <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{label}</div>
+      <div style={{fontSize:20,fontWeight:700,color:accent||TEXT,fontFamily:MONO}}>{value}</div>
+      {sub!==undefined && <div style={{fontSize:10,color:MUTED,marginTop:3}}>{sub}</div>}
     </div>
   );
 }
 
-// DOC pill — exact MyFitness status badge
-function DocBadge({ v }) {
-  const s = docStatus(v);
-  if (!v || v === 0) return <span style={{ color: MUTED, fontFamily: MONO, fontSize: 11, fontWeight: 700 }}>—</span>;
-  return (
-    <span style={{ background: s.bg, color: s.color, border: s.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-      {fmtDoc(v)}
-    </span>
-  );
-}
-
 const SIZE_TABS = [
-  { id: 'All',        label: 'All',        emoji: '📦', color: '#e6edf3' },
-  { id: '100ml',      label: '100ml',      emoji: '🟣', color: '#e879f9' },
-  { id: '50ml',       label: '50ml',       emoji: '🟢', color: '#00c896' },
-  { id: '20ml',       label: '20ml',       emoji: '🟡', color: '#f5a623' },
-  { id: 'Gift Packs', label: 'Gift Packs', emoji: '🎁', color: '#7c5cfc' },
-  { id: 'ASN',           label: 'ASN',            emoji: '🚚', color: '#00bcd4' },
-  { id: 'ASN_DELIVERED', label: 'Delivered Today', emoji: '✅', color: '#00e676' },
+  {id:'All',          label:'All',            emoji:'📦', color:'#e6edf3'},
+  {id:'100ml',        label:'100ml',          emoji:'🟣', color:'#e879f9'},
+  {id:'50ml',         label:'50ml',           emoji:'🟢', color:'#00c896'},
+  {id:'20ml',         label:'20ml',           emoji:'🟡', color:'#f5a623'},
+  {id:'Gift Packs',   label:'Gift Packs',     emoji:'🎁', color:'#7c5cfc'},
+  {id:'ASN',          label:'ASN',            emoji:'🚚', color:'#00bcd4'},
+  {id:'ASN_DELIVERED',label:'Delivered Today',emoji:'✅', color:'#00e676'},
 ];
 
 export default function App() {
-  const [data, setData]           = useState({ b2b: [], b2c: [], asn: [], asnDelivered: [] });
+  const [data, setData]           = useState({b2b:[],b2c:[],asn:[],asnDelivered:[]});
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
   const [sizeTab, setSizeTab]     = useState('All');
   const [sortCol, setSortCol]     = useState('b2b_totalDOC');
   const [sortDir, setSortDir]     = useState('asc');
   const [search, setSearch]       = useState('');
+  const [asnSearch, setAsnSearch] = useState('');
   const [chat, setChat]           = useState([]);
   const [input, setInput]         = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
   const [listening, setListening] = useState(false);
-  const [asnSearch, setAsnSearch] = useState('');
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chat]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({behavior:'smooth'}); }, [chat]);
   useEffect(() => { fetchData(); }, []);
 
   async function fetchData() {
@@ -107,258 +89,228 @@ export default function App() {
       if (!res.ok) throw new Error(`API error: ${res.status}`);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setData({ b2b: json.b2b || [], b2c: json.b2c || [], asn: json.asn || [], asnDelivered: json.asnDelivered || [] });
+      setData({b2b:json.b2b||[],b2c:json.b2c||[],asn:json.asn||[],asnDelivered:json.asnDelivered||[]});
       const now = new Date(json.updatedAt);
-      setLastUpdated(`${now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`);
-    } catch (e) { setError(e.message); }
+      setLastUpdated(`${now.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}, ${now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`);
+    } catch(e) { setError(e.message); }
     setLoading(false);
   }
 
-  // Union of B2B + B2C
   const merged = (() => {
     const map = {};
-    data.b2b.forEach(r => { map[r.style] = { style: r.style, sizeGroup: getSizeGroup(r.style), b2b: r, b2c: null }; });
-    data.b2c.forEach(r => {
-      if (map[r.style]) map[r.style].b2c = r;
-      else map[r.style] = { style: r.style, sizeGroup: getSizeGroup(r.style), b2b: null, b2c: r };
-    });
+    data.b2b.forEach(r => { map[r.style]={style:r.style,sizeGroup:getSizeGroup(r.style),b2b:r,b2c:null}; });
+    data.b2c.forEach(r => { if(map[r.style]) map[r.style].b2c=r; else map[r.style]={style:r.style,sizeGroup:getSizeGroup(r.style),b2b:null,b2c:r}; });
     return Object.values(map);
   })();
 
-  const tab = SIZE_TABS.find(t => t.id === sizeTab);
+  const tab = SIZE_TABS.find(t => t.id===sizeTab) || SIZE_TABS[0];
 
   const visibleRows = merged
-    .filter(r => sizeTab === 'All' || r.sizeGroup === sizeTab)
+    .filter(r => sizeTab==='All'||sizeTab==='ASN'||sizeTab==='ASN_DELIVERED'||r.sizeGroup===sizeTab)
     .filter(r => r.style.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (sortCol === 'style') return sortDir === 'asc' ? a.style.localeCompare(b.style) : b.style.localeCompare(a.style);
-
-      // Summary columns: combined B2B+B2C
+    .sort((a,b) => {
+      if (sortCol==='style') return sortDir==='asc'?a.style.localeCompare(b.style):b.style.localeCompare(a.style);
       const getVal = (row) => {
-        if (sortCol === 'sum_soh') return (row.b2b?.totalSOH || 0) + (row.b2c?.totalSOH || 0);
-        if (sortCol === 'sum_drr') return (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
-        if (sortCol === 'sum_doc') {
-          const soh = (row.b2b?.totalSOH || 0) + (row.b2c?.totalSOH || 0);
-          const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
-          return drr > 0 ? soh / drr : 0;
-        }
-        if (sortCol === 'sum_fdrr') {
-          const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
-          const mult = row.sizeGroup === '50ml' ? 1.30 : 1.15;
-          return drr * mult;
-        }
-        if (sortCol === 'sum_fdoc') {
-          const soh = (row.b2b?.totalSOH || 0) + (row.b2c?.totalSOH || 0);
-          const drr = (row.b2b?.totalDRR || 0) + (row.b2c?.totalDRR || 0);
-          const mult = row.sizeGroup === '50ml' ? 1.30 : 1.15;
-          const projDRR = drr * mult;
-          return projDRR > 0 ? soh / projDRR : 0;
-        }
-        // B2B or B2C specific columns
-        const [src, ...rest] = sortCol.split('_');
-        const col = rest.join('_');
-        return row[src]?.[col] ?? 0;
+        if (sortCol==='sum_soh') return (row.b2b?.totalSOH||0)+(row.b2c?.totalSOH||0);
+        if (sortCol==='sum_drr') return (row.b2b?.totalDRR||0)+(row.b2c?.totalDRR||0);
+        if (sortCol==='sum_doc') { const s=(row.b2b?.totalSOH||0)+(row.b2c?.totalSOH||0),d=(row.b2b?.totalDRR||0)+(row.b2c?.totalDRR||0); return d>0?s/d:0; }
+        if (sortCol==='sum_fdrr') { const d=(row.b2b?.totalDRR||0)+(row.b2c?.totalDRR||0); return d*(row.sizeGroup==='50ml'?1.30:1.15); }
+        if (sortCol==='sum_fdoc') { const s=(row.b2b?.totalSOH||0)+(row.b2c?.totalSOH||0),d=(row.b2b?.totalDRR||0)+(row.b2c?.totalDRR||0),p=d*(row.sizeGroup==='50ml'?1.30:1.15); return p>0?s/p:0; }
+        const [src,...rest]=sortCol.split('_'); const col=rest.join('_'); return row[src]?.[col]??0;
       };
-
-      let av = getVal(a), bv = getVal(b);
-      if (av === 0 && sortDir === 'asc') av = Infinity;
-      if (bv === 0 && sortDir === 'asc') bv = Infinity;
-      return sortDir === 'asc' ? av - bv : bv - av;
+      let av=getVal(a),bv=getVal(b);
+      if(av===0&&sortDir==='asc') av=Infinity;
+      if(bv===0&&sortDir==='asc') bv=Infinity;
+      return sortDir==='asc'?av-bv:bv-av;
     });
 
-  // Summary — filtered to current size tab (drives cards + subtotal row)
-  const visB2B = visibleRows.map(r => r.b2b).filter(Boolean);
-  const visB2C = visibleRows.map(r => r.b2c).filter(Boolean);
-  const b2bSOH = visB2B.reduce((s, r) => s + r.totalSOH, 0);
-  const b2cSOH = visB2C.reduce((s, r) => s + r.totalSOH, 0);
-  const b2bDRR = visB2B.reduce((s, r) => s + r.totalDRR, 0);
-  const b2cDRR = visB2C.reduce((s, r) => s + r.totalDRR, 0);
-  const b2bDOC = b2bDRR > 0 ? b2bSOH / b2bDRR : null;
-  const b2cDOC = b2cDRR > 0 ? b2cSOH / b2cDRR : null;
-  const allB2B = visB2B; const allB2C = visB2C;
+  const visB2B = visibleRows.map(r=>r.b2b).filter(Boolean);
+  const visB2C = visibleRows.map(r=>r.b2c).filter(Boolean);
+  const b2bSOH=visB2B.reduce((s,r)=>s+r.totalSOH,0), b2cSOH=visB2C.reduce((s,r)=>s+r.totalSOH,0);
+  const b2bDRR=visB2B.reduce((s,r)=>s+r.totalDRR,0), b2cDRR=visB2C.reduce((s,r)=>s+r.totalDRR,0);
+  const b2bDOC=b2bDRR>0?b2bSOH/b2bDRR:null, b2cDOC=b2cDRR>0?b2cSOH/b2cDRR:null;
+  const subCombSOH=b2bSOH+b2cSOH, subCombDRR=b2bDRR+b2cDRR;
+  const subCombDOC=subCombDRR>0?subCombSOH/subCombDRR:null;
+  const subProjDRR=visibleRows.reduce((s,r)=>{const d=(r.b2b?.totalDRR||0)+(r.b2c?.totalDRR||0);return s+d*(r.sizeGroup==='50ml'?1.30:1.15);},0);
+  const subFDOC=subProjDRR>0?subCombSOH/subProjDRR:null;
+  const critCnt=merged.filter(r=>(r.b2b?.totalDOC>0&&r.b2b?.totalDOC<=15)||(r.b2c?.totalDOC>0&&r.b2c?.totalDOC<=15)).length;
+  const stockCnt=merged.filter(r=>!r.b2b?.totalSOH&&!r.b2c?.totalSOH).length;
 
-  // Subtotal row for summary columns
-  const subCombSOH = b2bSOH + b2cSOH;
-  const subCombDRR = b2bDRR + b2cDRR;
-  const subCombDOC = subCombDRR > 0 ? subCombSOH / subCombDRR : null;
-  // Proj DRR for subtotal: weighted by size group
-  const subProjDRR = visibleRows.reduce((s, r) => {
-    const drr = (r.b2b?.totalDRR || 0) + (r.b2c?.totalDRR || 0);
-    return s + drr * (r.sizeGroup === '50ml' ? 1.30 : 1.15);
-  }, 0);
-  const subFDOC = subProjDRR > 0 ? subCombSOH / subProjDRR : null;
-
-  const critCnt = merged.filter(r => (r.b2b?.totalDOC > 0 && r.b2b?.totalDOC <= 15) || (r.b2c?.totalDOC > 0 && r.b2c?.totalDOC <= 15)).length;
-  const stockCnt = merged.filter(r => !r.b2b?.totalSOH && !r.b2c?.totalSOH).length;
-
-  function downloadCSV() {
-    const headers = [
-      'Style', 'Size',
-      'Total SOH', 'Total DRR', 'Total DOC', 'Proj DRR', 'FDOC',
-      'B2B SOH Total', 'B2B SOH GGN', 'B2B SOH BHW', 'B2B SOH BLR',
-      'B2B DOC Total', 'B2B DOC GGN', 'B2B DOC BHW', 'B2B DOC BLR',
-      'B2B DRR Total', 'B2B DRR GGN', 'B2B DRR BHW', 'B2B DRR BLR',
-      'B2C SOH Total', 'B2C SOH GGN', 'B2C SOH BHW', 'B2C SOH BLR',
-      'B2C DOC Total', 'B2C DOC GGN', 'B2C DOC BHW', 'B2C DOC BLR',
-      'B2C DRR Total', 'B2C DRR GGN', 'B2C DRR BHW', 'B2C DRR BLR',
-    ];
-    const v = (n) => (!n || isNaN(n) || n === 0) ? '' : Math.round(n);
-    const rows = visibleRows.map(row => {
-      const b = row.b2b, c = row.b2c;
-      const combSOH = (b?.totalSOH||0)+(c?.totalSOH||0);
-      const combDRR = (b?.totalDRR||0)+(c?.totalDRR||0);
-      const combDOC = combDRR > 0 ? Math.round(combSOH/combDRR) : '';
-      const mult = row.sizeGroup === '50ml' ? 1.30 : 1.15;
-      const projDRR = Math.round(combDRR * mult);
-      const fDOC = projDRR > 0 ? Math.round(combSOH/projDRR) : '';
-      return [
-        row.style, row.sizeGroup,
-        v(combSOH), v(combDRR), combDOC, v(projDRR), fDOC,
-        v(b?.totalSOH), v(b?.sohGGN), v(b?.sohBHW), v(b?.sohBLR),
-        v(b?.totalDOC), v(b?.docGGN), v(b?.docBHW), v(b?.docBLR),
-        v(b?.totalDRR), v(b?.drrGGN), v(b?.drrBHW), v(b?.drrBLR),
-        v(c?.totalSOH), v(c?.sohGGN), v(c?.sohBHW), v(c?.sohBLR),
-        v(c?.totalDOC), v(c?.docGGN), v(c?.docBHW), v(c?.docBLR),
-        v(c?.totalDRR), v(c?.drrGGN), v(c?.drrBHW), v(c?.drrBLR),
-      ];
-    });
-    const csv = [headers, ...rows].map(r => r.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `villain_inventory_${sizeTab.replace(' ','_').toLowerCase()}_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function toggleSort(col) {
-    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortCol(col); setSortDir('asc'); }
-  }
+  function toggleSort(col) { if(sortCol===col) setSortDir(d=>d==='asc'?'desc':'asc'); else{setSortCol(col);setSortDir('asc');} }
 
   async function sendChat() {
-    if (!input.trim() || chatLoading) return;
-    const msg = input.trim(); setInput('');
-    setChat(h => [...h, { role: 'user', text: msg }]);
-    setChatLoading(true);
+    if(!input.trim()||chatLoading) return;
+    const msg=input.trim(); setInput('');
+    setChat(h=>[...h,{role:'user',text:msg}]); setChatLoading(true);
     try {
-      const res = await fetch('/api/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, history: chat.slice(-6), activeTab: 'combined' })
-      });
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
-      setChat(h => [...h, { role: 'ai', text: json.reply }]);
-    } catch (e) { setChat(h => [...h, { role: 'ai', text: 'Error: ' + e.message }]); }
+      const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,history:chat.slice(-6),activeTab:'combined'})});
+      const json=await res.json();
+      if(json.error) throw new Error(json.error);
+      setChat(h=>[...h,{role:'ai',text:json.reply}]);
+    } catch(e){setChat(h=>[...h,{role:'ai',text:'Error: '+e.message}]);}
     setChatLoading(false);
   }
 
   function toggleVoice() {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return;
-    if (listening) { recognitionRef.current?.stop(); setListening(false); return; }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const r = new SR();
-    r.lang = 'en-IN'; r.continuous = false; r.interimResults = false;
-    r.onresult = e => { setInput(e.results[0][0].transcript); setListening(false); };
-    r.onerror = () => setListening(false);
-    r.onend = () => setListening(false);
-    recognitionRef.current = r; r.start(); setListening(true);
+    if(!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) return;
+    if(listening){recognitionRef.current?.stop();setListening(false);return;}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    const r=new SR(); r.lang='en-IN'; r.continuous=false; r.interimResults=false;
+    r.onresult=e=>{setInput(e.results[0][0].transcript);setListening(false);};
+    r.onerror=()=>setListening(false); r.onend=()=>setListening(false);
+    recognitionRef.current=r; r.start(); setListening(true);
   }
 
-  // Table header — exact MyFitness style
-  const TH = ({ label, col, right }) => (
-    <th onClick={() => toggleSort(col)} style={{
-      padding: '10px 12px', textAlign: right ? 'right' : 'left',
-      color: sortCol === col ? tab.color : MUTED,
-      cursor: 'pointer', userSelect: 'none',
-      fontFamily: MONO, fontSize: 9,
-      letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-      borderBottom: `1px solid ${BORDER2}`,
-      background: '#0b0f14', position: 'sticky', top: 22, zIndex: 1, fontWeight: 400,
-    }}>
-      {label}{sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+  function downloadCSV() {
+    const headers=['Style','Size','Total SOH','Total DRR','Total DOC','Proj DRR','FDOC','B2B SOH Total','B2B SOH GGN','B2B SOH BHW','B2B SOH BLR','B2B DOC Total','B2B DOC GGN','B2B DOC BHW','B2B DOC BLR','B2B DRR Total','B2B DRR GGN','B2B DRR BHW','B2B DRR BLR','B2C SOH Total','B2C SOH GGN','B2C SOH BHW','B2C SOH BLR','B2C DOC Total','B2C DOC GGN','B2C DOC BHW','B2C DOC BLR','B2C DRR Total','B2C DRR GGN','B2C DRR BHW','B2C DRR BLR'];
+    const v=n=>(!n||isNaN(n)||n===0)?'':Math.round(n);
+    const rows=visibleRows.map(row=>{
+      const b=row.b2b,c=row.b2c;
+      const cs=(b?.totalSOH||0)+(c?.totalSOH||0),cd=(b?.totalDRR||0)+(c?.totalDRR||0);
+      const mult=row.sizeGroup==='50ml'?1.30:1.15;
+      const pDRR=Math.round(cd*mult),fDOC=pDRR>0?Math.round(cs/pDRR):'';
+      return [row.style,row.sizeGroup,v(cs),v(cd),cd>0?Math.round(cs/cd):'',v(pDRR),fDOC,v(b?.totalSOH),v(b?.sohGGN),v(b?.sohBHW),v(b?.sohBLR),v(b?.totalDOC),v(b?.docGGN),v(b?.docBHW),v(b?.docBLR),v(b?.totalDRR),v(b?.drrGGN),v(b?.drrBHW),v(b?.drrBLR),v(c?.totalSOH),v(c?.sohGGN),v(c?.sohBHW),v(c?.sohBLR),v(c?.totalDOC),v(c?.docGGN),v(c?.docBHW),v(c?.docBLR),v(c?.totalDRR),v(c?.drrGGN),v(c?.drrBHW),v(c?.drrBLR)];
+    });
+    const csv=[headers,...rows].map(r=>r.map(cell=>`"${cell}"`).join(',')).join('\n');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`villain_${sizeTab.toLowerCase().replace(' ','_')}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  }
+
+  const TH = ({label,col,right}) => (
+    <th onClick={()=>toggleSort(col)} style={{padding:'10px 12px',textAlign:right?'right':'left',color:sortCol===col?tab.color:MUTED,cursor:'pointer',userSelect:'none',fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',whiteSpace:'nowrap',borderBottom:`1px solid ${BORDER2}`,background:BG2,position:'sticky',top:22,zIndex:1,fontWeight:400}}>
+      {label}{sortCol===col?(sortDir==='asc'?' ↑':' ↓'):''}
     </th>
   );
-
-  // Sticky column header (both horizontally and vertically frozen)
-  const STH = ({ label, col, left }) => (
-    <th onClick={() => toggleSort(col)} style={{
-      padding: '10px 12px', textAlign: 'left',
-      color: sortCol === col ? tab.color : MUTED,
-      cursor: 'pointer', userSelect: 'none',
-      fontFamily: MONO, fontSize: 9,
-      letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap',
-      borderBottom: `1px solid ${BORDER2}`,
-      borderRight: '1px solid rgba(255,255,255,0.06)',
-      background: '#0b0f14', position: 'sticky', top: 22, left, zIndex: 3, fontWeight: 400,
-    }}>
-      {label}{sortCol === col ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+  const STH = ({label,col,left}) => (
+    <th onClick={()=>toggleSort(col)} style={{padding:'10px 12px',textAlign:'left',color:sortCol===col?tab.color:MUTED,cursor:'pointer',userSelect:'none',fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',whiteSpace:'nowrap',borderBottom:`1px solid ${BORDER2}`,borderRight:'1px solid rgba(255,255,255,0.06)',background:BG2,position:'sticky',top:22,left,zIndex:3,fontWeight:400}}>
+      {label}{sortCol===col?(sortDir==='asc'?' ↑':' ↓'):''}
     </th>
   );
-
-  // Group header
-  const GH = ({ label, cols, color, leftBorder }) => (
-    <th colSpan={cols} style={{
-      padding: '5px 10px', textAlign: 'center',
-      fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase',
-      color, borderBottom: `1px solid ${color}55`,
-      background: BG, position: 'sticky', top: 0, zIndex: 2, whiteSpace: 'nowrap',
-      borderLeft: leftBorder ? '1px solid rgba(255,255,255,0.06)' : 'none',
-    }}>
+  const GH = ({label,cols,color,leftBorder}) => (
+    <th colSpan={cols} style={{padding:'5px 10px',textAlign:'center',fontFamily:MONO,fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase',color,borderBottom:`1px solid ${color}55`,background:BG,position:'sticky',top:0,zIndex:2,whiteSpace:'nowrap',borderLeft:leftBorder?'1px solid rgba(255,255,255,0.06)':'none'}}>
       {label}
     </th>
   );
 
-  if (loading) return (
-    <div style={{ height: '100vh', background: BG, color: TEXT, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <div style={{ fontSize: 16, fontWeight: 700 }}>📦 Villain Inventory Review</div>
-      <div style={{ width: 160, height: 2, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
-        <div style={{ width: '55%', height: '100%', background: '#e879f9', borderRadius: 2 }} />
+  // ── ASN shared table component ────────────────────────────────────────────
+  function AsnTable({rows, dateCol, dateLabel, accentColor}) {
+    const filtered = rows.filter(r=>r.style.toLowerCase().includes(asnSearch.toLowerCase()));
+    const whs = [...new Set(rows.map(r=>r.wh))].filter(Boolean).sort();
+    const totalQty = rows.reduce((s,r)=>s+r.qty,0);
+    return (
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',padding:'0 20px 16px'}}>
+        {/* WH cards */}
+        <div style={{display:'flex',gap:8,marginBottom:12,flexShrink:0,flexWrap:'wrap'}}>
+          <div style={{background:'rgba(255,255,255,0.03)',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1}}>
+            <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{sizeTab==='ASN'?'Total Inbound':'Delivered Today'}</div>
+            <div style={{fontSize:20,fontWeight:700,color:accentColor,fontFamily:MONO}}>{totalQty.toLocaleString('en-IN')}</div>
+            <div style={{fontSize:10,color:MUTED,marginTop:3}}>{rows.length} lines · {new Set(rows.map(r=>r.style)).size} SKUs</div>
+          </div>
+          {whs.map(wh=>{
+            const whRows=rows.filter(r=>r.wh===wh);
+            return (
+              <div key={wh} style={{background:'rgba(255,255,255,0.03)',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1}}>
+                <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{wh}</div>
+                <div style={{fontSize:20,fontWeight:700,color:accentColor,fontFamily:MONO}}>{whRows.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN')}</div>
+                <div style={{fontSize:10,color:MUTED,marginTop:3}}>{whRows.length} lines · {new Set(whRows.map(r=>r.style)).size} SKUs</div>
+              </div>
+            );
+          })}
+        </div>
+        {/* Search */}
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,flexShrink:0}}>
+          <input value={asnSearch} onChange={e=>setAsnSearch(e.target.value)} placeholder="Search style..."
+            style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'7px 12px',color:TEXT,fontSize:13,outline:'none',fontFamily:FONT,width:220}}/>
+          <span style={{color:MUTED,fontSize:12}}>{filtered.length} / {rows.length} lines</span>
+        </div>
+        {/* Table */}
+        <div style={{flex:1,overflow:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+            <thead>
+              <tr>
+                {['Style / SKU','Warehouse',dateLabel].map(h=>(
+                  <th key={h} style={{padding:'10px 14px',textAlign:'left',color:MUTED,fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1}}>{h}</th>
+                ))}
+                {sizeTab==='ASN' && <th style={{padding:'10px 14px',textAlign:'left',color:MUTED,fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1}}>Status</th>}
+                <th style={{padding:'10px 14px',textAlign:'right',color:MUTED,fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1}}>Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((r,i)=>{
+                const today=new Date(); today.setHours(0,0,0,0);
+                const dateVal=r[dateCol]||'';
+                const edd=new Date(dateVal); edd.setHours(0,0,0,0);
+                const daysOut=dateVal&&!isNaN(edd.getTime())?Math.round((edd-today)/86400000):null;
+                const dateColor=sizeTab==='ASN'?(daysOut===null?MUTED:daysOut<0?'#ff4444':daysOut<=3?'#f5a623':'#00c896'):'#00e676';
+                const statusColor=r.status==='DISPATCHED'?'#00c896':r.status==='APPROVED'?'#e879f9':'#f5a623';
+                const rowBg=i%2===0?'transparent':'rgba(255,255,255,0.01)';
+                return (
+                  <tr key={i} style={{borderBottom:'1px solid rgba(255,255,255,0.04)',background:rowBg,transition:'background 0.1s'}}
+                    onMouseEnter={e=>e.currentTarget.style.background=`${accentColor}0d`}
+                    onMouseLeave={e=>e.currentTarget.style.background=rowBg}>
+                    <td style={{padding:'9px 14px',color:TEXT2,fontWeight:600,fontSize:12}}>{r.style}</td>
+                    <td style={{padding:'9px 14px',color:MUTED,fontFamily:MONO,fontSize:11}}>{r.wh||'—'}</td>
+                    <td style={{padding:'9px 14px',fontFamily:MONO,fontSize:11}}>
+                      <span style={{color:dateColor}}>{dateVal||'—'}</span>
+                      {sizeTab==='ASN'&&daysOut!==null&&<span style={{color:MUTED,fontSize:10,marginLeft:8}}>{daysOut<0?`${Math.abs(daysOut)}d overdue`:daysOut===0?'today':`in ${daysOut}d`}</span>}
+                    </td>
+                    {sizeTab==='ASN'&&<td style={{padding:'9px 14px'}}>
+                      <span style={{background:`${statusColor}18`,color:statusColor,border:`1px solid ${statusColor}44`,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em',textTransform:'uppercase'}}>{r.status}</span>
+                    </td>}
+                    <td style={{padding:'9px 14px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:11,fontWeight:600}}>{r.qty.toLocaleString('en-IN')}</td>
+                  </tr>
+                );
+              })}
+              {filtered.length===0&&<tr><td colSpan={sizeTab==='ASN'?5:4} style={{padding:'32px 14px',textAlign:'center',color:MUTED,fontFamily:MONO,fontSize:12}}>{sizeTab==='ASN_DELIVERED'?'No deliveries today':'No results'}</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div style={{ fontSize: 12, color: MUTED }}>Loading data...</div>
+    );
+  }
+
+  if (loading) return (
+    <div style={{height:'100vh',background:BG,color:TEXT,fontFamily:FONT,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+      <div style={{fontSize:16,fontWeight:700}}>📦 Villain Inventory Review</div>
+      <div style={{width:160,height:2,background:'rgba(255,255,255,0.06)',borderRadius:2}}><div style={{width:'55%',height:'100%',background:'#e879f9',borderRadius:2}}/></div>
+      <div style={{fontSize:12,color:MUTED}}>Loading data...</div>
     </div>
   );
 
   if (error) return (
-    <div style={{ height: '100vh', background: BG, color: TEXT, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14, padding: 32 }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <div style={{ fontSize: 16, fontWeight: 700 }}>📦 Villain Inventory Review</div>
-      <div style={{ color: '#ff6b6b', fontSize: 13, background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', padding: '10px 18px', borderRadius: 8, maxWidth: 460, textAlign: 'center' }}>{error}</div>
-      <button onClick={fetchData} style={{ background: '#e879f9', border: 'none', borderRadius: 8, padding: '9px 22px', color: '#fff', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Retry</button>
+    <div style={{height:'100vh',background:BG,color:TEXT,fontFamily:FONT,display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:14,padding:32}}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+      <div style={{fontSize:16,fontWeight:700}}>📦 Villain Inventory Review</div>
+      <div style={{color:'#ff6b6b',fontSize:13,background:'rgba(255,68,68,0.08)',border:'1px solid rgba(255,68,68,0.2)',padding:'10px 18px',borderRadius:8,maxWidth:460,textAlign:'center'}}>{error}</div>
+      <button onClick={fetchData} style={{background:'#e879f9',border:'none',borderRadius:8,padding:'9px 22px',color:'#fff',fontFamily:FONT,fontSize:13,fontWeight:600,cursor:'pointer'}}>Retry</button>
     </div>
   );
 
-  const SUGGESTIONS = ['Critical SKUs?', 'Which 100ml are low DOC?', 'B2C stockout risk?', 'Gift pack DOC summary?'];
+  const isASNTab = sizeTab==='ASN'||sizeTab==='ASN_DELIVERED';
 
   return (
-    <div style={{ height: '100vh', background: BG, color: TEXT, fontFamily: FONT, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <div style={{height:'100vh',background:BG,color:TEXT,fontFamily:FONT,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-      {/* Header — exact MyFitness */}
-      <div style={{ padding: '16px 24px 0', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <span style={{ fontSize: 16, fontWeight: 700 }}>📦 Villain Inventory Review</span>
-          {lastUpdated && (
-            <span style={{ fontSize: 10, color: MUTED, fontFamily: MONO, background: 'rgba(255,255,255,0.05)', borderRadius: 5, padding: '2px 8px' }}>
-              LIVE · {lastUpdated}
-            </span>
-          )}
-          {stockCnt > 0 && <span style={{ fontSize: 10, color: '#ff4444', fontFamily: MONO, background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.25)', borderRadius: 5, padding: '2px 8px', fontWeight: 700 }}>⚠ {stockCnt} Stockout</span>}
-          {critCnt > 0 && <span style={{ fontSize: 10, color: '#f5a623', fontFamily: MONO, background: 'rgba(245,166,35,0.1)', border: '1px solid rgba(245,166,35,0.25)', borderRadius: 5, padding: '2px 8px', fontWeight: 700 }}>⚠ {critCnt} Critical</span>}
-          <button onClick={fetchData} style={{ marginLeft: 'auto', fontSize: 11, color: MUTED, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontFamily: FONT }}>↻ Refresh</button>
+      {/* Header */}
+      <div style={{padding:'16px 24px 0',borderBottom:`1px solid ${BORDER}`,flexShrink:0}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:16}}>
+          <span style={{fontSize:16,fontWeight:700}}>📦 Villain Inventory Review</span>
+          {lastUpdated&&<span style={{fontSize:10,color:MUTED,fontFamily:MONO,background:'rgba(255,255,255,0.05)',borderRadius:5,padding:'2px 8px'}}>LIVE · {lastUpdated}</span>}
+          {stockCnt>0&&<span style={{fontSize:10,color:'#ff4444',fontFamily:MONO,background:'rgba(255,68,68,0.1)',border:'1px solid rgba(255,68,68,0.25)',borderRadius:5,padding:'2px 8px',fontWeight:700}}>⚠ {stockCnt} Stockout</span>}
+          {critCnt>0&&<span style={{fontSize:10,color:'#f5a623',fontFamily:MONO,background:'rgba(245,166,35,0.1)',border:'1px solid rgba(245,166,35,0.25)',borderRadius:5,padding:'2px 8px',fontWeight:700}}>⚠ {critCnt} Critical</span>}
+          <button onClick={fetchData} style={{marginLeft:'auto',fontSize:11,color:MUTED,background:'rgba(255,255,255,0.04)',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'4px 12px',cursor:'pointer',fontFamily:FONT}}>↻ Refresh</button>
         </div>
-
-        {/* Size tabs — exact MyFitness tab style */}
-        <div style={{ display: 'flex', gap: 2 }}>
-          {SIZE_TABS.map(t => {
-            const count = t.id === 'All' ? merged.length : t.id === 'ASN' ? data.asn.length : t.id === 'ASN_DELIVERED' ? data.asnDelivered.length : merged.filter(r => r.sizeGroup === t.id).length;
+        {/* Tabs */}
+        <div style={{display:'flex',gap:2}}>
+          {SIZE_TABS.map(t=>{
+            const count=t.id==='All'?merged.length:t.id==='ASN'?data.asn.length:t.id==='ASN_DELIVERED'?data.asnDelivered.length:merged.filter(r=>r.sizeGroup===t.id).length;
             return (
-              <button key={t.id} onClick={() => { setSizeTab(t.id); setSearch(''); setSortCol('b2b_totalDOC'); setSortDir('asc'); }}
-                style={{ padding: '9px 18px', border: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 13, fontWeight: 600, borderRadius: '7px 7px 0 0', background: sizeTab === t.id ? 'rgba(255,255,255,0.06)' : 'transparent', color: sizeTab === t.id ? t.color : MUTED, borderBottom: sizeTab === t.id ? `2px solid ${t.color}` : '2px solid transparent', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button key={t.id} onClick={()=>{setSizeTab(t.id);setSearch('');setAsnSearch('');setSortCol('b2b_totalDOC');setSortDir('asc');}}
+                style={{padding:'9px 18px',border:'none',cursor:'pointer',fontFamily:FONT,fontSize:13,fontWeight:600,borderRadius:'7px 7px 0 0',background:sizeTab===t.id?'rgba(255,255,255,0.06)':'transparent',color:sizeTab===t.id?t.color:MUTED,borderBottom:sizeTab===t.id?`2px solid ${t.color}`:'2px solid transparent',transition:'all 0.15s',display:'flex',alignItems:'center',gap:6}}>
                 {t.emoji} {t.label}
-                <span style={{ fontSize: 10, background: sizeTab === t.id ? `${t.color}22` : 'rgba(255,255,255,0.04)', color: sizeTab === t.id ? t.color : '#444', border: `1px solid ${sizeTab === t.id ? t.color + '44' : 'rgba(255,255,255,0.06)'}`, borderRadius: 10, padding: '0 6px', lineHeight: '18px' }}>{count}</span>
+                <span style={{fontSize:10,background:sizeTab===t.id?`${t.color}22`:'rgba(255,255,255,0.04)',color:sizeTab===t.id?t.color:'#444',border:`1px solid ${sizeTab===t.id?t.color+'44':'rgba(255,255,255,0.06)'}`,borderRadius:10,padding:'0 6px',lineHeight:'18px'}}>{count}</span>
               </button>
             );
           })}
@@ -366,409 +318,200 @@ export default function App() {
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+        {/* Left panel */}
+        <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',borderRight:`1px solid ${BORDER}`}}>
 
-        {/* Left: cards + table */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${BORDER}` }}>
-
-          {/* Cards — exact MyFitness gap/padding */}
-          {(sizeTab !== 'ASN' && sizeTab !== 'ASN_DELIVERED') && <div style={{ display: 'flex', gap: 8, padding: '10px 20px', flexShrink: 0 }}>
-            {[
-              { label: 'Total SOH', b2bVal: fmtFull(b2bSOH), b2cVal: fmtFull(b2cSOH), b2bColor: tab.color, b2cColor: '#00c896', sub: `${allB2B.length} B2B · ${allB2C.length} B2C SKUs` },
-              { label: 'Total DRR', b2bVal: fmtFull(b2bDRR), b2cVal: fmtFull(b2cDRR), b2bColor: TEXT, b2cColor: TEXT, sub: 'daily run rate' },
-              { label: 'Avg DOC  (SOH ÷ DRR)', b2bVal: fmtDoc(b2bDOC), b2cVal: fmtDoc(b2cDOC),
-                b2bColor: !b2bDOC ? TEXT : b2bDOC <= 15 ? '#ff4444' : b2bDOC <= 30 ? '#f5a623' : b2bDOC <= 60 ? '#00c896' : '#7c5cfc',
-                b2cColor: !b2cDOC ? TEXT : b2cDOC <= 15 ? '#ff4444' : b2cDOC <= 30 ? '#f5a623' : b2cDOC <= 60 ? '#00c896' : '#7c5cfc',
-                sub: critCnt > 0 ? `⚠ ${critCnt} critical` : stockCnt > 0 ? `⚠ ${stockCnt} stockout` : 'all healthy' },
-            ].map(c => (
-              <div key={c.label} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>{c.label}</div>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-end', marginBottom: 4 }}>
-                  <div>
-                    <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, marginBottom: 2, letterSpacing: '0.08em' }}>B2B</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: c.b2bColor, fontFamily: MONO, lineHeight: 1 }}>{c.b2bVal}</div>
+          {/* Cards — only for inventory tabs */}
+          {!isASNTab && (
+            <div style={{display:'flex',gap:8,padding:'10px 20px',flexShrink:0}}>
+              {[
+                {label:'Total SOH',b2bVal:fmtFull(b2bSOH),b2cVal:fmtFull(b2cSOH),b2bColor:tab.color,b2cColor:'#00c896',sub:`${visB2B.length} B2B · ${visB2C.length} B2C SKUs`},
+                {label:'Total DRR',b2bVal:fmtFull(b2bDRR),b2cVal:fmtFull(b2cDRR),b2bColor:TEXT,b2cColor:TEXT,sub:'daily run rate'},
+                {label:'Avg DOC (SOH ÷ DRR)',b2bVal:fmtDoc(b2bDOC),b2cVal:fmtDoc(b2cDOC),
+                  b2bColor:!b2bDOC?TEXT:b2bDOC<=15?'#ff4444':b2bDOC<=30?'#f5a623':b2bDOC<=60?'#00c896':'#7c5cfc',
+                  b2cColor:!b2cDOC?TEXT:b2cDOC<=15?'#ff4444':b2cDOC<=30?'#f5a623':b2cDOC<=60?'#00c896':'#7c5cfc',
+                  sub:critCnt>0?`⚠ ${critCnt} critical`:stockCnt>0?`⚠ ${stockCnt} stockout`:'all healthy'},
+              ].map(c=>(
+                <div key={c.label} style={{background:'rgba(255,255,255,0.03)',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1}}>
+                  <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:6}}>{c.label}</div>
+                  <div style={{display:'flex',gap:14,alignItems:'flex-end',marginBottom:4}}>
+                    <div><div style={{fontSize:9,color:MUTED,fontFamily:MONO,marginBottom:2,letterSpacing:'0.08em'}}>B2B</div><div style={{fontSize:20,fontWeight:700,color:c.b2bColor,fontFamily:MONO,lineHeight:1}}>{c.b2bVal}</div></div>
+                    <div style={{width:1,height:28,background:BORDER2,flexShrink:0}}/>
+                    <div><div style={{fontSize:9,color:MUTED,fontFamily:MONO,marginBottom:2,letterSpacing:'0.08em'}}>B2C</div><div style={{fontSize:20,fontWeight:700,color:c.b2cColor,fontFamily:MONO,lineHeight:1}}>{c.b2cVal}</div></div>
                   </div>
-                  <div style={{ width: 1, height: 28, background: BORDER2, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, marginBottom: 2, letterSpacing: '0.08em' }}>B2C</div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: c.b2cColor, fontFamily: MONO, lineHeight: 1 }}>{c.b2cVal}</div>
-                  </div>
+                  <div style={{fontSize:10,color:c.label.includes('DOC')&&critCnt>0?'#ff4444':MUTED,marginTop:2}}>{c.sub}</div>
                 </div>
-                <div style={{ fontSize: 10, color: c.label.includes('DOC') && critCnt > 0 ? '#ff4444' : MUTED, marginTop: 2 }}>{c.sub}</div>
-              </div>
-            ))}
-          </div>}
+              ))}
+            </div>
+          )}
 
-          {/* Search */}
-          {(sizeTab !== 'ASN' && sizeTab !== 'ASN_DELIVERED') && <div style={{ padding: '0 20px 10px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search style..."
-              style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '7px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT, width: 220 }} />
-            <span style={{ color: MUTED, fontSize: 12 }}>{visibleRows.length} / {merged.length} SKUs</span>
-            <button onClick={downloadCSV} style={{ marginLeft: 'auto', background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '6px 14px', color: MUTED, fontSize: 11, cursor: 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
-              ↓ Export CSV
-            </button>
-          </div>}
+          {/* Search + Export — only for inventory tabs */}
+          {!isASNTab && (
+            <div style={{padding:'0 20px 10px',flexShrink:0,display:'flex',alignItems:'center',gap:10}}>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search style..."
+                style={{background:'rgba(255,255,255,0.04)',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'7px 12px',color:TEXT,fontSize:13,outline:'none',fontFamily:FONT,width:220}}/>
+              <span style={{color:MUTED,fontSize:12}}>{visibleRows.length} / {merged.length} SKUs</span>
+              <button onClick={downloadCSV} style={{marginLeft:'auto',background:'rgba(255,255,255,0.04)',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'6px 14px',color:MUTED,fontSize:11,cursor:'pointer',fontFamily:FONT}}>↓ Export CSV</button>
+            </div>
+          )}
 
-          {/* Table or ASN view */}
-          {(sizeTab === 'ASN' || sizeTab === 'ASN_DELIVERED') ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 20px 16px' }}>
-              {sizeTab === 'ASN_DELIVERED' ? (
-                // ── Delivered Today view ──────────────────────────────────────
-                <>
-                  {/* WH cards */}
-                  {(() => {
-                    const rows = data.asnDelivered;
-                    const whs = [...new Set(rows.map(r => r.wh))].filter(Boolean).sort();
-                    const totalQty = rows.reduce((s,r) => s+r.qty, 0);
+          {/* ASN views */}
+          {sizeTab==='ASN' && <AsnTable rows={data.asn} dateCol="edd" dateLabel="Expected Delivery" accentColor="#00bcd4"/>}
+          {sizeTab==='ASN_DELIVERED' && <AsnTable rows={data.asnDelivered} dateCol="actualDate" dateLabel="Actual Delivery Date" accentColor="#00e676"/>}
+
+          {/* Inventory table */}
+          {!isASNTab && (
+            <div style={{flex:1,overflow:'auto',padding:'0 20px 0'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                <thead>
+                  <tr>
+                    <th colSpan={2} style={{background:BG,position:'sticky',top:0,left:0,zIndex:4,borderBottom:`1px solid ${BORDER}`,borderRight:'1px solid rgba(255,255,255,0.06)'}}/>
+                    <GH label="Summary" cols={5} color="#ffffff" leftBorder/>
+                    <GH label="B2B — SOH" cols={4} color="#e879f9" leftBorder/>
+                    <GH label="B2B — DOC" cols={4} color="#f5a623" leftBorder/>
+                    <GH label="B2B — DRR" cols={4} color="#00c896" leftBorder/>
+                    <GH label="B2C — SOH" cols={4} color="#e879f9" leftBorder/>
+                    <GH label="B2C — DOC" cols={4} color="#f5a623" leftBorder/>
+                    <GH label="B2C — DRR" cols={4} color="#00c896" leftBorder/>
+                  </tr>
+                  <tr>
+                    <STH label="Style" col="style" left={0}/>
+                    <STH label="Size"  col="size"  left={180}/>
+                    <TH label="Total SOH" col="sum_soh"  right/><TH label="Total DRR" col="sum_drr" right/><TH label="Total DOC" col="sum_doc" right/><TH label="Proj DRR" col="sum_fdrr" right/><TH label="FDOC" col="sum_fdoc" right/>
+                    <TH label="Total" col="b2b_totalSOH" right/><TH label="GGN" col="b2b_sohGGN" right/><TH label="BHW" col="b2b_sohBHW" right/><TH label="BLR" col="b2b_sohBLR" right/>
+                    <TH label="Total" col="b2b_totalDOC" right/><TH label="GGN" col="b2b_docGGN" right/><TH label="BHW" col="b2b_docBHW" right/><TH label="BLR" col="b2b_docBLR" right/>
+                    <TH label="Total" col="b2b_totalDRR" right/><TH label="GGN" col="b2b_drrGGN" right/><TH label="BHW" col="b2b_drrBHW" right/><TH label="BLR" col="b2b_drrBLR" right/>
+                    <TH label="Total" col="b2c_totalSOH" right/><TH label="GGN" col="b2c_sohGGN" right/><TH label="BHW" col="b2c_sohBHW" right/><TH label="BLR" col="b2c_sohBLR" right/>
+                    <TH label="Total" col="b2c_totalDOC" right/><TH label="GGN" col="b2c_docGGN" right/><TH label="BHW" col="b2c_docBHW" right/><TH label="BLR" col="b2c_docBLR" right/>
+                    <TH label="Total" col="b2c_totalDRR" right/><TH label="GGN" col="b2c_drrGGN" right/><TH label="BHW" col="b2c_drrBHW" right/><TH label="BLR" col="b2c_drrBLR" right/>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Subtotal row */}
+                  {(()=>{
+                    const PS=(d)=>{const s=docPillStyle(d);return d?<span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em'}}>{Math.round(d)+'d'}</span>:<span style={{color:MUTED}}>—</span>;};
+                    const sbg='rgba(255,255,255,0.04)';
+                    const sB2BSOH=visB2B.reduce((s,r)=>s+r.totalSOH,0),sB2CSOH=visB2C.reduce((s,r)=>s+r.totalSOH,0);
+                    const sB2BDRR=visB2B.reduce((s,r)=>s+r.totalDRR,0),sB2CDRR=visB2C.reduce((s,r)=>s+r.totalDRR,0);
+                    const sB2BGGN=visB2B.reduce((s,r)=>s+r.sohGGN,0),sB2BBHW=visB2B.reduce((s,r)=>s+r.sohBHW,0),sB2BBLR=visB2B.reduce((s,r)=>s+r.sohBLR,0);
+                    const sB2CGGN=visB2C.reduce((s,r)=>s+r.sohGGN,0),sB2CBHW=visB2C.reduce((s,r)=>s+r.sohBHW,0),sB2CBLR=visB2C.reduce((s,r)=>s+r.sohBLR,0);
+                    const sB2BDOC=sB2BDRR>0?sB2BSOH/sB2BDRR:null,sB2CDOC=sB2CDRR>0?sB2CSOH/sB2CDRR:null;
+                    const sB2BdGGN=visB2B.length?visB2B.reduce((s,r)=>s+r.docGGN,0)/visB2B.length:null,sB2BdBHW=visB2B.length?visB2B.reduce((s,r)=>s+r.docBHW,0)/visB2B.length:null,sB2BdBLR=visB2B.length?visB2B.reduce((s,r)=>s+r.docBLR,0)/visB2B.length:null;
+                    const sB2CdGGN=visB2C.length?visB2C.reduce((s,r)=>s+r.docGGN,0)/visB2C.length:null,sB2CdBHW=visB2C.length?visB2C.reduce((s,r)=>s+r.docBHW,0)/visB2C.length:null,sB2CdBLR=visB2C.length?visB2C.reduce((s,r)=>s+r.docBLR,0)/visB2C.length:null;
+                    const sB2BdRGGN=visB2B.reduce((s,r)=>s+r.drrGGN,0),sB2BdRBHW=visB2B.reduce((s,r)=>s+r.drrBHW,0),sB2BdRBLR=visB2B.reduce((s,r)=>s+r.drrBLR,0);
+                    const sB2CdRGGN=visB2C.reduce((s,r)=>s+r.drrGGN,0),sB2CdRBHW=visB2C.reduce((s,r)=>s+r.drrBHW,0),sB2CdRBLR=visB2C.reduce((s,r)=>s+r.drrBLR,0);
+                    const td=(v,bold)=><td style={{padding:'7px 12px',textAlign:'right',color:bold?TEXT:DIM,fontFamily:MONO,fontSize:10,fontWeight:bold?700:400,background:sbg}}>{v?fmtFull(v):'—'}</td>;
                     return (
-                      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexShrink: 0, flexWrap: 'wrap' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                          <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>Delivered Today</div>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: '#00e676', fontFamily: MONO }}>{totalQty.toLocaleString('en-IN')}</div>
-                          <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{rows.length} lines · {new Set(rows.map(r=>r.style)).size} SKUs</div>
-                        </div>
-                        {whs.map(wh => {
-                          const whRows = rows.filter(r => r.wh === wh);
-                          return (
-                            <div key={wh} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                              <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{wh}</div>
-                              <div style={{ fontSize: 20, fontWeight: 700, color: '#00e676', fontFamily: MONO }}>{whRows.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN')}</div>
-                              <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{whRows.length} lines · {new Set(whRows.map(r=>r.style)).size} SKUs</div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <tr style={{borderBottom:'2px solid rgba(255,255,255,0.12)',background:sbg}}>
+                        <td style={{padding:'7px 12px',color:MUTED,fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',position:'sticky',left:0,zIndex:2,background:sbg,borderRight:'1px solid rgba(255,255,255,0.06)'}}>TOTAL</td>
+                        <td style={{padding:'7px 10px',position:'sticky',left:180,zIndex:2,background:sbg,borderRight:'1px solid rgba(255,255,255,0.06)'}}/>
+                        <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,borderLeft:'1px solid rgba(255,255,255,0.08)',background:sbg}}>{fmtFull(subCombSOH)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,background:sbg}}>{fmtFull(subCombDRR)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(subCombDOC)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',color:DIM,fontFamily:MONO,fontSize:10,background:sbg}}>{fmtFull(Math.round(subProjDRR))}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderRight:'1px solid rgba(255,255,255,0.08)'}}>{PS(subFDOC)}</td>
+                        {td(sB2BSOH,true)}{td(sB2BGGN)}{td(sB2BBHW)}{td(sB2BBLR)}
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderLeft:'1px solid rgba(255,255,255,0.04)'}}>{PS(sB2BDOC)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdGGN)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdBHW)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdBLR)}</td>
+                        {td(sB2BDRR,true)}{td(sB2BdRGGN)}{td(sB2BdRBHW)}{td(sB2BdRBLR)}
+                        <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,background:sbg,borderLeft:'1px solid rgba(255,255,255,0.08)'}}>{fmtFull(sB2CSOH)}</td>
+                        {td(sB2CGGN)}{td(sB2CBHW)}{td(sB2CBLR)}
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderLeft:'1px solid rgba(255,255,255,0.04)'}}>{PS(sB2CDOC)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdGGN)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdBHW)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdBLR)}</td>
+                        {td(sB2CDRR,true)}{td(sB2CdRGGN)}{td(sB2CdRBHW)}{td(sB2CdRBLR)}
+                      </tr>
                     );
                   })()}
-                  {/* Search */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexShrink: 0 }}>
-                    <input value={asnSearch} onChange={e => setAsnSearch(e.target.value)} placeholder="Search style..."
-                      style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '7px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT, width: 220 }} />
-                    <span style={{ color: MUTED, fontSize: 12 }}>
-                      {data.asnDelivered.filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase())).length} / {data.asnDelivered.length} lines
-                    </span>
-                  </div>
-                  {/* Table */}
-                  <div style={{ flex: 1, overflow: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                      <thead>
-                        <tr>
-                          {['Style / SKU', 'Warehouse', 'Actual Delivery Date'].map(h => (
-                            <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>{h}</th>
-                          ))}
-                          <th style={{ padding: '10px 14px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>Qty</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.asnDelivered
-                          .filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase()))
-                          .map((r, i) => {
-                            const rowBg = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)';
-                            return (
-                              <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: rowBg, transition: 'background 0.1s' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,230,118,0.05)'}
-                                onMouseLeave={e => e.currentTarget.style.background = rowBg}
-                              >
-                                <td style={{ padding: '9px 14px', color: TEXT2, fontWeight: 600, fontSize: 12 }}>{r.style}</td>
-                                <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh || '—'}</td>
-                                <td style={{ padding: '9px 14px', color: '#00e676', fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{r.actualDate}</td>
-                                <td style={{ padding: '9px 14px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{r.qty.toLocaleString('en-IN')}</td>
-                              </tr>
-                            );
-                          })}
-                        {data.asnDelivered.filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase())).length === 0 && (
-                          <tr><td colSpan={4} style={{ padding: '32px 14px', textAlign: 'center', color: MUTED, fontFamily: MONO, fontSize: 12 }}>No deliveries today</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              ) : (
-              <>
-              {/* WH-level cards */}
-              {(() => {
-                const whs = [...new Set(data.asn.map(r => r.wh))].filter(Boolean).sort();
-                const totalQty = data.asn.reduce((s,r) => s+r.qty, 0);
-                return (
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexShrink: 0, flexWrap: 'wrap' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                      <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>Total Inbound</div>
-                      <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{totalQty.toLocaleString('en-IN')}</div>
-                      <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{data.asn.length} lines · {new Set(data.asn.map(r=>r.style)).size} SKUs</div>
-                    </div>
-                    {whs.map(wh => {
-                      const whRows = data.asn.filter(r => r.wh === wh);
-                      return (
-                        <div key={wh} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${BORDER2}`, borderRadius: 10, padding: '10px 14px', flex: 1 }}>
-                          <div style={{ fontSize: 9, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{wh}</div>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: '#00bcd4', fontFamily: MONO }}>{whRows.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN')}</div>
-                          <div style={{ fontSize: 10, color: MUTED, marginTop: 3 }}>{whRows.length} lines · {new Set(whRows.map(r=>r.style)).size} SKUs</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-              {/* Search */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexShrink: 0 }}>
-                <input value={asnSearch} onChange={e => setAsnSearch(e.target.value)} placeholder="Search style..."
-                  style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 6, padding: '7px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT, width: 220 }} />
-                <span style={{ color: MUTED, fontSize: 12 }}>
-                  {data.asn.filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase())).length} / {data.asn.length} lines
-                </span>
-              </div>
-              {/* Table */}
-              <div style={{ flex: 1, overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                  <thead>
-                    <tr>
-                      {['Style / SKU', 'Warehouse', 'Expected Delivery', 'Status'].map(h => (
-                        <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>{h}</th>
-                      ))}
-                      <th style={{ padding: '10px 14px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: `1px solid ${BORDER2}`, background: BG, position: 'sticky', top: 0, zIndex: 1 }}>Qty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.asn
-                      .filter(r => r.style.toLowerCase().includes(asnSearch.toLowerCase()))
-                      .map((r, i) => {
-                        const statusColor = r.status.toLowerCase() === 'dispatched' ? '#00c896' : r.status.toLowerCase() === 'approved' ? '#e879f9' : '#f5a623';
-                        const today = new Date(); today.setHours(0,0,0,0);
-                        const edd = new Date(r.edd); edd.setHours(0,0,0,0);
-                        const daysOut = isNaN(edd.getTime()) ? null : Math.round((edd - today) / 86400000);
-                        const eddColor = daysOut === null ? MUTED : daysOut < 0 ? '#ff4444' : daysOut <= 3 ? '#f5a623' : '#00c896';
-                        const rowBg = i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)';
-                        return (
-                          <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: rowBg, transition: 'background 0.1s' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,188,212,0.05)'}
-                            onMouseLeave={e => e.currentTarget.style.background = rowBg}
-                          >
-                            <td style={{ padding: '9px 14px', color: TEXT2, fontWeight: 600, fontSize: 12 }}>{r.style}</td>
-                            <td style={{ padding: '9px 14px', color: MUTED, fontFamily: MONO, fontSize: 11 }}>{r.wh || '—'}</td>
-                            <td style={{ padding: '9px 14px', fontFamily: MONO, fontSize: 11 }}>
-                              <span style={{ color: eddColor }}>{r.edd || '—'}</span>
-                              {daysOut !== null && <span style={{ color: MUTED, fontSize: 10, marginLeft: 8 }}>{daysOut < 0 ? `${Math.abs(daysOut)}d overdue` : daysOut === 0 ? 'today' : `in ${daysOut}d`}</span>}
-                            </td>
-                            <td style={{ padding: '9px 14px' }}>
-                              <span style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}44`, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{r.status}</span>
-                            </td>
-                            <td style={{ padding: '9px 14px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600 }}>{r.qty.toLocaleString('en-IN')}</td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
-              </div>
+                  {/* Data rows */}
+                  {visibleRows.map((row,i)=>{
+                    const b=row.b2b,c=row.b2c;
+                    const sColor=SIZE_TABS.find(t=>t.id===row.sizeGroup)?.color||MUTED;
+                    const isStockout=!b?.totalSOH&&!c?.totalSOH;
+                    const rowBg=isStockout?'rgba(255,68,68,0.05)':i%2===0?'transparent':'rgba(255,255,255,0.01)';
+                    const combSOH=(b?.totalSOH||0)+(c?.totalSOH||0),combDRR=(b?.totalDRR||0)+(c?.totalDRR||0);
+                    const combDOC=combDRR>0?combSOH/combDRR:null;
+                    const mult=row.sizeGroup==='50ml'?1.30:1.15;
+                    const projDRR=combDRR*mult,fDOC=projDRR>0?combSOH/projDRR:null;
+                    const td=(v,bold,bl)=><td style={{padding:'8px 10px',textAlign:'right',color:bold?TEXT:DIM,fontFamily:MONO,fontSize:11,fontWeight:bold?700:400,borderLeft:bl?'1px solid rgba(255,255,255,0.04)':'none'}}>{fmt(v)}</td>;
+                    return (
+                      <tr key={`${row.style}-${i}`} style={{borderBottom:'1px solid rgba(255,255,255,0.04)',background:rowBg,transition:'background 0.12s'}}
+                        onMouseEnter={e=>e.currentTarget.style.background=`${sColor}0a`}
+                        onMouseLeave={e=>e.currentTarget.style.background=rowBg}>
+                        <td style={{padding:'9px 12px',color:TEXT2,fontWeight:600,whiteSpace:'nowrap',fontSize:12,position:'sticky',left:0,zIndex:2,background:i%2===0?BG:BG2,borderRight:'1px solid rgba(255,255,255,0.06)'}}>{row.style}</td>
+                        <td style={{padding:'9px 10px',position:'sticky',left:180,zIndex:2,background:i%2===0?BG:BG2,borderRight:'1px solid rgba(255,255,255,0.06)'}}>
+                          <span style={{color:sColor,fontFamily:MONO,fontSize:9,fontWeight:700,background:`${sColor}15`,border:`1px solid ${sColor}33`,padding:'2px 7px',borderRadius:10}}>{row.sizeGroup}</span>
+                        </td>
+                        <td style={{padding:'8px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:11,fontWeight:700,borderLeft:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.02)'}}>{combSOH?fmtFull(combSOH):'—'}</td>
+                        <td style={{padding:'8px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:11,fontWeight:700,background:'rgba(255,255,255,0.02)'}}>{combDRR?fmtFull(combDRR):'—'}</td>
+                        <td style={{padding:'8px 12px',textAlign:'right',background:'rgba(255,255,255,0.02)'}}><DocPill v={combDOC}/></td>
+                        <td style={{padding:'8px 12px',textAlign:'right',color:DIM,fontFamily:MONO,fontSize:11,background:'rgba(255,255,255,0.02)'}}>{projDRR?fmtFull(Math.round(projDRR)):'—'}</td>
+                        <td style={{padding:'8px 12px',textAlign:'right',background:'rgba(255,255,255,0.02)',borderRight:'1px solid rgba(255,255,255,0.08)'}}><DocPill v={fDOC}/></td>
+                        {td(b?.totalSOH,true,'1px solid rgba(255,255,255,0.04)')}{td(b?.sohGGN)}{td(b?.sohBHW)}{td(b?.sohBLR)}
+                        <td style={{padding:'8px 10px',textAlign:'right',borderLeft:'1px solid rgba(255,255,255,0.04)'}}><DocPill v={b?.totalDOC}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docGGN}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docBHW}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docBLR}/></td>
+                        {td(b?.totalDRR,true,'1px solid rgba(255,255,255,0.04)')}{td(b?.drrGGN)}{td(b?.drrBHW)}{td(b?.drrBLR)}
+                        {td(c?.totalSOH,true,'1px solid rgba(255,255,255,0.08)')}{td(c?.sohGGN)}{td(c?.sohBHW)}{td(c?.sohBLR)}
+                        <td style={{padding:'8px 10px',textAlign:'right',borderLeft:'1px solid rgba(255,255,255,0.04)'}}><DocPill v={c?.totalDOC}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docGGN}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docBHW}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docBLR}/></td>
+                        {td(c?.totalDRR,true,'1px solid rgba(255,255,255,0.04)')}{td(c?.drrGGN)}{td(c?.drrBHW)}{td(c?.drrBLR)}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            </>
-          ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 20px 16px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead>
-                <tr>
-                  <th colSpan={2} style={{ background: BG, position: 'sticky', top: 0, left: 0, zIndex: 4, borderBottom: `1px solid ${BORDER}`, borderRight: '1px solid rgba(255,255,255,0.06)' }} />
-                  <GH label="Summary" cols={5} color="#ffffff" leftBorder />
-                  <GH label="B2B — SOH" cols={4} color="#e879f9" leftBorder />
-                  <GH label="B2B — DOC" cols={4} color="#f5a623" leftBorder />
-                  <GH label="B2B — DRR" cols={4} color="#00c896" leftBorder />
-                  <GH label="B2C — SOH" cols={4} color="#e879f9" leftBorder />
-                  <GH label="B2C — DOC" cols={4} color="#f5a623" leftBorder />
-                  <GH label="B2C — DRR" cols={4} color="#00c896" leftBorder />
-                </tr>
-                <tr style={{ borderBottom: `1px solid ${BORDER2}` }}>
-                  <STH label="Style" col="style" left={0} />
-                  <STH label="Size"  col="size"  left={180} />
-                  <TH label="Total SOH"  col="sum_soh"  right />
-                  <TH label="Total DRR"  col="sum_drr"  right />
-                  <TH label="Total DOC"  col="sum_doc"  right />
-                  <TH label="Proj. DRR"  col="sum_fdrr" right />
-                  <TH label="FDOC"       col="sum_fdoc" right />
-                  <TH label="Total"  col="b2b_totalSOH" right /><TH label="GGN" col="b2b_sohGGN" right /><TH label="BHW" col="b2b_sohBHW" right /><TH label="BLR" col="b2b_sohBLR" right />
-                  <TH label="Total"  col="b2b_totalDOC" right /><TH label="GGN" col="b2b_docGGN" right /><TH label="BHW" col="b2b_docBHW" right /><TH label="BLR" col="b2b_docBLR" right />
-                  <TH label="Total"  col="b2b_totalDRR" right /><TH label="GGN" col="b2b_drrGGN" right /><TH label="BHW" col="b2b_drrBHW" right /><TH label="BLR" col="b2b_drrBLR" right />
-                  <TH label="Total"  col="b2c_totalSOH" right /><TH label="GGN" col="b2c_sohGGN" right /><TH label="BHW" col="b2c_sohBHW" right /><TH label="BLR" col="b2c_sohBLR" right />
-                  <TH label="Total"  col="b2c_totalDOC" right /><TH label="GGN" col="b2c_docGGN" right /><TH label="BHW" col="b2c_docBHW" right /><TH label="BLR" col="b2c_docBLR" right />
-                  <TH label="Total"  col="b2c_totalDRR" right /><TH label="GGN" col="b2c_drrGGN" right /><TH label="BHW" col="b2c_drrBHW" right /><TH label="BLR" col="b2c_drrBLR" right />
-                </tr>
-              </thead>
-              <tbody>
-                {/* Subtotal row */}
-                {(() => {
-                  const pillS = (d) => !d || !isFinite(d) ? {color:MUTED,bg:'transparent',border:'1px solid rgba(255,255,255,0.08)'} : d<=7 ? {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'} : d<=15 ? {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'} : d<=30 ? {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'} : d<=60 ? {color:'#00c896',bg:'rgba(0,200,150,0.10)',border:'1px solid rgba(0,200,150,0.33)'} : {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'};
-                  const SubPill = ({d}) => { const s = pillS(d); return d ? <span style={{ background: s.bg, color: s.color, border: s.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em' }}>{Math.round(d)+'d'}</span> : <span style={{color:MUTED}}>—</span>; };
-                  const subBg = 'rgba(255,255,255,0.04)';
-                  const subB2BSOH = visB2B.reduce((s,r)=>s+r.totalSOH,0), subB2CSOH = visB2C.reduce((s,r)=>s+r.totalSOH,0);
-                  const subB2BDRR = visB2B.reduce((s,r)=>s+r.totalDRR,0), subB2CDRR = visB2C.reduce((s,r)=>s+r.totalDRR,0);
-                  const subB2BGDN = visB2B.reduce((s,r)=>s+r.sohGGN,0), subB2BBHW = visB2B.reduce((s,r)=>s+r.sohBHW,0), subB2BBLR = visB2B.reduce((s,r)=>s+r.sohBLR,0);
-                  const subB2CGDN = visB2C.reduce((s,r)=>s+r.sohGGN,0), subB2CBHW = visB2C.reduce((s,r)=>s+r.sohBHW,0), subB2CBLR = visB2C.reduce((s,r)=>s+r.sohBLR,0);
-                  const subB2BDOC = subB2BDRR>0?subB2BSOH/subB2BDRR:null, subB2CDOC = subB2CDRR>0?subB2CSOH/subB2CDRR:null;
-                  const subB2BdGGN=visB2B.reduce((s,r)=>s+r.docGGN,0)/Math.max(visB2B.length,1), subB2BdBHW=visB2B.reduce((s,r)=>s+r.docBHW,0)/Math.max(visB2B.length,1), subB2BdBLR=visB2B.reduce((s,r)=>s+r.docBLR,0)/Math.max(visB2B.length,1);
-                  const subB2CdGGN=visB2C.reduce((s,r)=>s+r.docGGN,0)/Math.max(visB2C.length,1), subB2CdBHW=visB2C.reduce((s,r)=>s+r.docBHW,0)/Math.max(visB2C.length,1), subB2CdBLR=visB2C.reduce((s,r)=>s+r.docBLR,0)/Math.max(visB2C.length,1);
-                  const subB2BdRGGN=visB2B.reduce((s,r)=>s+r.drrGGN,0), subB2BdRBHW=visB2B.reduce((s,r)=>s+r.drrBHW,0), subB2BdRBLR=visB2B.reduce((s,r)=>s+r.drrBLR,0);
-                  const subB2CdRGGN=visB2C.reduce((s,r)=>s+r.drrGGN,0), subB2CdRBHW=visB2C.reduce((s,r)=>s+r.drrBHW,0), subB2CdRBLR=visB2C.reduce((s,r)=>s+r.drrBLR,0);
-                  const td = (v, bold) => <td style={{ padding: '7px 12px', textAlign: 'right', color: bold ? TEXT : MUTED, fontFamily: MONO, fontSize: 10, fontWeight: bold ? 700 : 400, background: subBg }}>{v ? fmtFull(v) : '—'}</td>;
-                  return (
-                    <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.12)', background: subBg }}>
-                      <td style={{ padding: '7px 12px', color: MUTED, fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', position: 'sticky', left: 0, zIndex: 2, background: 'rgba(255,255,255,0.04)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>TOTAL</td>
-                      <td style={{ padding: '7px 10px', position: 'sticky', left: 180, zIndex: 2, background: 'rgba(255,255,255,0.04)', borderRight: '1px solid rgba(255,255,255,0.06)' }} />
-                      {/* Summary subtotals */}
-                      <td style={{ padding: '7px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 10, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,0.08)', background: subBg }}>{fmtFull(subCombSOH)}</td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: subBg }}>{fmtFull(subCombDRR)}</td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subCombDOC} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', color: MUTED, fontFamily: MONO, fontSize: 10, background: subBg }}>{fmtFull(Math.round(subProjDRR))}</td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg, borderRight: '1px solid rgba(255,255,255,0.08)' }}><SubPill d={subFDOC} /></td>
-                      {/* B2B SOH */}
-                      {td(subB2BSOH, true)}{td(subB2BGDN)}{td(subB2BBHW)}{td(subB2BBLR)}
-                      {/* B2B DOC */}
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg, borderLeft: '1px solid rgba(255,255,255,0.04)' }}><SubPill d={subB2BDOC} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2BdGGN||null} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2BdBHW||null} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2BdBLR||null} /></td>
-                      {/* B2B DRR */}
-                      {td(subB2BDRR, true)}{td(subB2BdRGGN)}{td(subB2BdRBHW)}{td(subB2BdRBLR)}
-                      {/* B2C SOH */}
-                      <td style={{ padding: '7px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 10, fontWeight: 700, background: subBg, borderLeft: '1px solid rgba(255,255,255,0.08)' }}>{fmtFull(subB2CSOH)}</td>
-                      {td(subB2CGDN)}{td(subB2CBHW)}{td(subB2CBLR)}
-                      {/* B2C DOC */}
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg, borderLeft: '1px solid rgba(255,255,255,0.04)' }}><SubPill d={subB2CDOC} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2CdGGN||null} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2CdBHW||null} /></td>
-                      <td style={{ padding: '7px 12px', textAlign: 'right', background: subBg }}><SubPill d={subB2CdBLR||null} /></td>
-                      {/* B2C DRR */}
-                      {td(subB2CDRR, true)}{td(subB2CdRGGN)}{td(subB2CdRBHW)}{td(subB2CdRBLR)}
-                    </tr>
-                  );
-                })()}
-                {visibleRows.map((row, i) => {
-                  const b = row.b2b, c = row.b2c;
-                  const sColor = SIZE_TABS.find(t => t.id === row.sizeGroup)?.color || MUTED;
-                  const isStockout = !b?.totalSOH && !c?.totalSOH;
-                  const rowBg = isStockout ? 'rgba(255,68,68,0.05)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)';
-                  return (
-                    <tr key={`${row.style}-${i}`}
-                      style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: rowBg, transition: 'background 0.12s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = `${sColor}0a`}
-                      onMouseLeave={e => e.currentTarget.style.background = rowBg}
-                    >
-                      <td style={{ padding: '9px 12px', color: TEXT2, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 12, position: 'sticky', left: 0, zIndex: 2, background: i % 2 === 0 ? BG : BG2, borderRight: '1px solid rgba(255,255,255,0.06)' }}>{row.style}</td>
-                      <td style={{ padding: '9px 10px', position: 'sticky', left: 180, zIndex: 2, background: i % 2 === 0 ? BG : BG2, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-                        <span style={{ color: sColor, fontFamily: MONO, fontSize: 9, fontWeight: 700, background: `${sColor}15`, border: `1px solid ${sColor}33`, padding: '2px 7px', borderRadius: 10 }}>{row.sizeGroup}</span>
-                      </td>
-                      {/* Summary: combined B2B+B2C SOH, DRR, DOC, Proj DRR, FDOC */}
-                      {(() => {
-                        const combSOH = (b?.totalSOH || 0) + (c?.totalSOH || 0);
-                        const combDRR = (b?.totalDRR || 0) + (c?.totalDRR || 0);
-                        const combDOC = combDRR > 0 ? combSOH / combDRR : null;
-                        const mult    = row.sizeGroup === '50ml' ? 1.30 : 1.15;
-                        const projDRR = combDRR * mult;
-                        const fDOC    = projDRR > 0 ? combSOH / projDRR : null;
-                        const pillStyle = (d) => !d || !isFinite(d) ? {color:MUTED,bg:'transparent',border:'1px solid rgba(255,255,255,0.08)'} : d<=7 ? {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'} : d<=15 ? {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'} : d<=30 ? {color:'#f5c518',bg:'rgba(245,197,24,0.10)',border:'1px solid rgba(245,197,24,0.33)'} : d<=60 ? {color:'#00c896',bg:'rgba(0,200,150,0.10)',border:'1px solid rgba(0,200,150,0.33)'} : {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'};
-                        const Pill = ({d}) => { const s = pillStyle(d); return d ? <span style={{ background: s.bg, color: s.color, border: s.border, borderRadius: 5, padding: '2px 8px', fontSize: 9, fontFamily: MONO, fontWeight: 700, letterSpacing: '0.06em' }}>{Math.round(d)+'d'}</span> : <span style={{ color: MUTED }}>—</span>; };
-                        const cellBg = 'rgba(255,255,255,0.02)';
-                        return <>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, borderLeft: '1px solid rgba(255,255,255,0.08)', background: cellBg }}>{combSOH ? fmtFull(combSOH) : '—'}</td>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 700, background: cellBg }}>{combDRR ? fmtFull(combDRR) : '—'}</td>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', background: cellBg }}><Pill d={combDOC} /></td>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', color: '#a0aab4', fontFamily: MONO, fontSize: 11, background: cellBg }}>
-                            {projDRR ? <span title={`${row.sizeGroup === '50ml' ? '+30%' : '+15%'} on DRR`}>{fmtFull(Math.round(projDRR))}</span> : '—'}
-                          </td>
-                          <td style={{ padding: '9px 12px', textAlign: 'right', background: cellBg, borderRight: '1px solid rgba(255,255,255,0.08)' }}><Pill d={fDOC} /></td>
-                        </>;
-                      })()}
-                      {/* B2B SOH */}
-                      <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(b?.totalSOH)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.sohBLR)}</td>
-                      {/* B2B DOC */}
-                      <td style={{ padding: '9px 12px', textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.04)' }}><DocBadge v={b?.totalDOC} /></td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={b?.docGGN} /></td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={b?.docBHW} /></td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={b?.docBLR} /></td>
-                      {/* B2B DRR */}
-                      <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(b?.totalDRR)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(b?.drrBLR)}</td>
-                      {/* B2C SOH */}
-                      <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.08)' }}>{fmtFull(c?.totalSOH)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.sohBLR)}</td>
-                      {/* B2C DOC */}
-                      <td style={{ padding: '9px 12px', textAlign: 'right', borderLeft: '1px solid rgba(255,255,255,0.04)' }}><DocBadge v={c?.totalDOC} /></td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={c?.docGGN} /></td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={c?.docBHW} /></td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right' }}><DocBadge v={c?.docBLR} /></td>
-                      {/* B2C DRR */}
-                      <td style={{ padding: '9px 12px', textAlign: 'right', color: TEXT, fontFamily: MONO, fontSize: 11, fontWeight: 600, borderLeft: '1px solid rgba(255,255,255,0.04)' }}>{fmtFull(c?.totalDRR)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrGGN)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrBHW)}</td>
-                      <td style={{ padding: '9px 10px', textAlign: 'right', color: DIM, fontFamily: MONO, fontSize: 11 }}>{fmt(c?.drrBLR)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          )}{/* end ASN / ASN_DELIVERED ternary */}
-          {sizeTab !== 'ASN' && sizeTab !== 'ASN_DELIVERED' && (
-          <div style={{ display: 'flex', gap: 14, padding: '0 20px 12px', flexWrap: 'wrap', flexShrink: 0 }}>
-            {[['≤7d Critical', '#ff4444'], ['≤15d Low', '#f5a623'], ['≤30d', '#f5c518'], ['≤60d Healthy', '#00c896'], ['>60d Overstock', '#7c5cfc']].map(([l, c]) => (
-              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: MONO, fontSize: 9, color: MUTED }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: c }} />{l}
-              </div>
-            ))}
-          </div>
+          )}
+
+          {/* Legend */}
+          {!isASNTab && (
+            <div style={{display:'flex',gap:14,padding:'8px 20px 12px',flexWrap:'wrap',flexShrink:0}}>
+              {[['≤7d Critical','#ff4444'],['≤15d Low','#f5a623'],['≤30d','#f5c518'],['≤60d Healthy','#00c896'],['>60d Overstock','#7c5cfc']].map(([l,c])=>(
+                <div key={l} style={{display:'flex',alignItems:'center',gap:5,fontFamily:MONO,fontSize:9,color:MUTED}}>
+                  <div style={{width:6,height:6,borderRadius:'50%',background:c}}/>{l}
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Right: chat — exact MyFitness */}
-        <div style={{ width: 320, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${BORDER}`, fontSize: 10, color: MUTED, fontFamily: MONO, letterSpacing: '0.1em' }}>
+        {/* Chat panel */}
+        <div style={{width:320,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+          <div style={{padding:'12px 16px',borderBottom:`1px solid ${BORDER}`,fontSize:10,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em'}}>
             💬 MEETING ASSISTANT
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {chat.length === 0 && (
+          <div style={{flex:1,overflowY:'auto',padding:'14px 16px',display:'flex',flexDirection:'column',gap:10}}>
+            {chat.length===0&&(
               <>
-                <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.6 }}>Ask me anything about B2B or B2C inventory during your review.</div>
-                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {SUGGESTIONS.map(q => (
-                    <div key={q} onClick={() => setInput(q)}
-                      style={{ fontSize: 12, color: MUTED, cursor: 'pointer', padding: '8px 12px', borderRadius: 7, border: `1px solid ${BORDER2}`, transition: 'all 0.15s', background: 'rgba(255,255,255,0.02)' }}
-                      onMouseEnter={e => { e.currentTarget.style.borderColor = tab.color; e.currentTarget.style.color = tab.color; }}
-                      onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER2; e.currentTarget.style.color = MUTED; }}>
-                      {q}
-                    </div>
+                <div style={{fontSize:12,color:MUTED,lineHeight:1.6}}>Ask me anything about B2B or B2C inventory during your review.</div>
+                <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
+                  {['Critical SKUs?','Which 100ml are low DOC?','B2C stockout risk?','Gift pack DOC summary?'].map(q=>(
+                    <div key={q} onClick={()=>setInput(q)} style={{fontSize:12,color:MUTED,cursor:'pointer',padding:'8px 12px',borderRadius:7,border:`1px solid ${BORDER2}`,transition:'all 0.15s',background:'rgba(255,255,255,0.02)'}}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor=tab.color;e.currentTarget.style.color=tab.color;}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor=BORDER2;e.currentTarget.style.color=MUTED;}}>{q}</div>
                   ))}
                 </div>
               </>
             )}
-            {chat.map((m, i) => (
-              <div key={i} style={{
-                alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '92%',
-                background: m.role === 'user' ? `${tab.color}18` : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${m.role === 'user' ? tab.color + '33' : BORDER2}`,
-                borderRadius: m.role === 'user' ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
-                padding: '10px 12px', fontSize: 13, lineHeight: 1.6,
-                color: m.role === 'user' ? tab.color : TEXT2, whiteSpace: 'pre-wrap',
-              }}>{m.text}</div>
+            {chat.map((m,i)=>(
+              <div key={i} style={{alignSelf:m.role==='user'?'flex-end':'flex-start',maxWidth:'92%',background:m.role==='user'?`${tab.color}18`:'rgba(255,255,255,0.03)',border:`1px solid ${m.role==='user'?tab.color+'33':BORDER2}`,borderRadius:m.role==='user'?'10px 10px 2px 10px':'10px 10px 10px 2px',padding:'10px 12px',fontSize:13,lineHeight:1.6,color:m.role==='user'?tab.color:TEXT2,whiteSpace:'pre-wrap'}}>{m.text}</div>
             ))}
-            {chatLoading && (
-              <div style={{ alignSelf: 'flex-start', fontSize: 12, color: MUTED, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px 10px 10px 2px', border: `1px solid ${BORDER2}` }}>
-                Analyzing...
-              </div>
-            )}
-            <div ref={chatEndRef} />
+            {chatLoading&&<div style={{alignSelf:'flex-start',fontSize:12,color:MUTED,padding:'8px 12px',background:'rgba(255,255,255,0.03)',borderRadius:'10px 10px 10px 2px',border:`1px solid ${BORDER2}`}}>Analyzing...</div>}
+            <div ref={chatEndRef}/>
           </div>
-          <div style={{ padding: '12px 16px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 8 }}>
-            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChat()}
-              placeholder="Ask about any month or SKU..."
-              style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER2}`, borderRadius: 8, padding: '9px 12px', color: TEXT, fontSize: 13, outline: 'none', fontFamily: FONT }} />
-            <button onClick={toggleVoice}
-              style={{ background: listening ? `${tab.color}22` : 'rgba(255,255,255,0.04)', border: `1px solid ${listening ? tab.color + '55' : BORDER2}`, borderRadius: 8, padding: '9px 10px', color: listening ? tab.color : MUTED, cursor: 'pointer', fontSize: 14 }}>🎙</button>
-            <button onClick={sendChat} disabled={chatLoading || !input.trim()}
-              style={{ background: `linear-gradient(135deg, ${tab.color}, #7c5cfc)`, border: 'none', borderRadius: 8, padding: '9px 16px', color: '#fff', fontSize: 14, cursor: 'pointer', fontWeight: 600, opacity: chatLoading || !input.trim() ? 0.4 : 1 }}>→</button>
+          <div style={{padding:'12px 16px',borderTop:`1px solid ${BORDER}`,display:'flex',gap:8}}>
+            <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&sendChat()} placeholder="Ask about any month or SKU..."
+              style={{flex:1,background:'rgba(255,255,255,0.04)',border:`1px solid ${BORDER2}`,borderRadius:8,padding:'9px 12px',color:TEXT,fontSize:13,outline:'none',fontFamily:FONT}}/>
+            <button onClick={toggleVoice} style={{background:listening?`${tab.color}22`:'rgba(255,255,255,0.04)',border:`1px solid ${listening?tab.color+'55':BORDER2}`,borderRadius:8,padding:'9px 10px',color:listening?tab.color:MUTED,cursor:'pointer',fontSize:14}}>🎙</button>
+            <button onClick={sendChat} disabled={chatLoading||!input.trim()} style={{background:`linear-gradient(135deg, ${tab.color}, #7c5cfc)`,border:'none',borderRadius:8,padding:'9px 16px',color:'#fff',fontSize:14,cursor:'pointer',fontWeight:600,opacity:chatLoading||!input.trim()?0.4:1}}>→</button>
           </div>
         </div>
       </div>
