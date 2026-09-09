@@ -39,40 +39,37 @@ export default async function handler(req, res) {
     if (!response.ok) throw new Error(`ASN fetch failed: ${response.status}`);
     const csvText = await response.text();
     const lines = csvText.trim().split('\n');
-
-    // Row 1 = headers (index 0)
     const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
 
     if (req.query.debug_asn) {
-      // Show unique asn_status values so we can see what's in the data
       const iStatus = headers.indexOf('asn_status');
-      const iStyle  = headers.indexOf('sku_style_id');
       const statusVals = [...new Set(
         lines.slice(1).map(l => parseCSVLine(l)[iStatus] || '').filter(Boolean)
       )];
-      return {
-        headers,
-        totalRows: lines.length - 1,
-        uniqueStatuses: statusVals,
-        row1: parseCSVLine(lines[1]),
-        row2: parseCSVLine(lines[2]),
-      };
+      return { headers, totalRows: lines.length - 1, uniqueStatuses: statusVals };
     }
 
-    const iStatus = headers.indexOf('asn_status');
-    const iStyle  = headers.indexOf('sku_style_id');
-    const iWH     = headers.indexOf('warehouse_location');
-    const iEDD    = headers.indexOf('expected_delivery_date');
-    const iQty    = headers.indexOf('packing_list_qty');
+    const iStatus  = headers.indexOf('asn_status');
+    const iStyle   = headers.indexOf('sku_style_id');
+    const iWH      = headers.indexOf('warehouse_location');
+    const iEDD     = headers.indexOf('expected_delivery_date');
+    const iActual  = headers.indexOf('actual_delivery_date');
+    const iQty     = headers.indexOf('packing_list_qty');
+
+    // Today's date in IST (UTC+5:30) as YYYY-MM-DD
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60000;
+    const todayIST = new Date(now.getTime() + istOffset).toISOString().slice(0, 10);
 
     const VALID = new Set(['approved', 'dispatched', 'ops_approval_pending']);
 
-    const rows = lines.slice(1)
+    const allRows = lines.slice(1)
       .map(l => parseCSVLine(l))
-      .filter(r => {
-        const status = (r[iStatus] || '').trim().toLowerCase();
-        return VALID.has(status) && r[iStyle] && r[iStyle].trim();
-      })
+      .filter(r => r[iStyle] && r[iStyle].trim());
+
+    // ASN active (APPROVED / DISPATCHED / OPS_APPROVAL_PENDING)
+    const asnRows = allRows
+      .filter(r => VALID.has((r[iStatus] || '').trim().toLowerCase()))
       .map(r => ({
         style:  r[iStyle].trim(),
         wh:     (r[iWH] || '').trim(),
@@ -81,32 +78,59 @@ export default async function handler(req, res) {
         status: (r[iStatus] || '').trim().toUpperCase(),
       }));
 
-    // Dedupe at style × wh × edd — sum qty
-    const map = {};
-    rows.forEach(r => {
+    // Dedupe ASN at style × wh × edd
+    const asnMap = {};
+    asnRows.forEach(r => {
       const key = `${r.style}||${r.wh}||${r.edd}`;
-      if (map[key]) map[key].qty += r.qty;
-      else map[key] = { ...r };
+      if (asnMap[key]) asnMap[key].qty += r.qty;
+      else asnMap[key] = { ...r };
     });
-
-    return Object.values(map).sort((a, b) =>
+    const asn = Object.values(asnMap).sort((a, b) =>
       a.style !== b.style ? a.style.localeCompare(b.style) :
       a.edd !== b.edd ? a.edd.localeCompare(b.edd) :
       a.wh.localeCompare(b.wh)
     );
+
+    // Delivered today: status=DELIVERED AND actual_delivery_date = today (IST)
+    const deliveredRows = allRows
+      .filter(r => {
+        const status = (r[iStatus] || '').trim().toLowerCase();
+        const actualDate = (r[iActual] || '').trim().slice(0, 10); // take YYYY-MM-DD part
+        return status === 'delivered' && actualDate === todayIST;
+      })
+      .map(r => ({
+        style:      r[iStyle].trim(),
+        wh:         (r[iWH] || '').trim(),
+        actualDate: (r[iActual] || '').trim(),
+        qty:        n(r[iQty]),
+        status:     'DELIVERED',
+      }));
+
+    // Dedupe delivered at style × wh × actualDate
+    const delMap = {};
+    deliveredRows.forEach(r => {
+      const key = `${r.style}||${r.wh}||${r.actualDate}`;
+      if (delMap[key]) delMap[key].qty += r.qty;
+      else delMap[key] = { ...r };
+    });
+    const asnDelivered = Object.values(delMap).sort((a, b) =>
+      a.style !== b.style ? a.style.localeCompare(b.style) : a.wh.localeCompare(b.wh)
+    );
+
+    return { asn, asnDelivered, todayIST };
   }
 
   try {
     if (req.query.debug_asn) {
       return res.status(200).json(await fetchASN());
     }
-    const [b2b, b2c, asn] = await Promise.all([
+    const [b2b, b2c, asnData] = await Promise.all([
       fetchInventoryTab(B2B_GID, true),
       fetchInventoryTab(B2C_GID, false),
       fetchASN(),
     ]);
     if (req.query.debug) return res.status(200).json({ b2b, b2c });
-    res.status(200).json({ b2b, b2c, asn, updatedAt: new Date().toISOString() });
+    res.status(200).json({ b2b, b2c, asn: asnData.asn, asnDelivered: asnData.asnDelivered, updatedAt: new Date().toISOString() });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
