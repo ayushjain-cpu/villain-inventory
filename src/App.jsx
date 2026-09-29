@@ -25,9 +25,14 @@ function getSizeGroup(style) {
 
 function fmt(v) { if (!v||isNaN(v)||v===0) return '—'; if (v>=1000) return (v/1000).toFixed(v>=100000?0:1)+'k'; return String(Math.round(v)); }
 function fmtFull(v) { if (!v||isNaN(v)||v===0) return '—'; return Math.round(v).toLocaleString('en-IN'); }
-function fmtDoc(v) { if (!v||isNaN(v)||!isFinite(v)||v===0) return '—'; return Math.round(v)+'d'; }
+function fmtDoc(v, soh) {
+  if (soh === 0) return '0d';
+  if (!v||isNaN(v)||!isFinite(v)||v===0) return '—';
+  return Math.round(v)+'d';
+}
 
-function docPillStyle(doc) {
+function docPillStyle(doc, soh) {
+  if (soh === 0) return {color:'#ff4444',bg:'rgba(255,68,68,0.12)',border:'1px solid rgba(255,68,68,0.33)'};
   if (!doc||!isFinite(doc)||doc===0) return {color:MUTED,bg:'transparent',border:'1px solid rgba(255,255,255,0.08)'};
   if (doc<=7)  return {color:'#ff4444',bg:'rgba(255,68,68,0.12)',  border:'1px solid rgba(255,68,68,0.33)'};
   if (doc<=15) return {color:'#f5a623',bg:'rgba(245,166,35,0.12)',border:'1px solid rgba(245,166,35,0.33)'};
@@ -36,10 +41,11 @@ function docPillStyle(doc) {
   return          {color:'#7c5cfc',bg:'rgba(124,92,252,0.10)',border:'1px solid rgba(124,92,252,0.33)'};
 }
 
-function DocPill({ v }) {
-  const s = docPillStyle(v);
+function DocPill({ v, soh }) {
+  const s = docPillStyle(v, soh);
+  if (soh === 0) return <span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em',whiteSpace:'nowrap'}}>0d</span>;
   if (!v||v===0) return <span style={{color:MUTED,fontFamily:MONO,fontSize:11,fontWeight:700}}>—</span>;
-  return <span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em',whiteSpace:'nowrap'}}>{fmtDoc(v)}</span>;
+  return <span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em',whiteSpace:'nowrap'}}>{fmtDoc(v, soh)}</span>;
 }
 
 function Card({ label, value, sub, accent }) {
@@ -390,7 +396,7 @@ export default function App() {
                 <tbody>
                   {/* Subtotal row */}
                   {(()=>{
-                    const PS=(d)=>{const s=docPillStyle(d);return d?<span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em'}}>{Math.round(d)+'d'}</span>:<span style={{color:MUTED}}>—</span>;};
+                    const PS=(d,soh)=>{const s=docPillStyle(d,soh);if(soh===0)return <span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em'}}>0d</span>;return d?<span style={{background:s.bg,color:s.color,border:s.border,borderRadius:5,padding:'2px 8px',fontSize:9,fontFamily:MONO,fontWeight:700,letterSpacing:'0.06em'}}>{Math.round(d)+'d'}</span>:<span style={{color:MUTED}}>—</span>;};
                     const sbg='rgba(255,255,255,0.04)';
                     const sB2BSOH=visB2B.reduce((s,r)=>s+r.totalSOH,0),sB2CSOH=visB2C.reduce((s,r)=>s+r.totalSOH,0);
                     const sB2BDRR=visB2B.reduce((s,r)=>s+r.totalDRR,0),sB2CDRR=visB2C.reduce((s,r)=>s+r.totalDRR,0);
@@ -408,21 +414,21 @@ export default function App() {
                         <td style={{padding:'7px 10px',position:'sticky',left:180,zIndex:2,background:sbg,borderRight:'1px solid rgba(255,255,255,0.06)'}}/>
                         <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,borderLeft:'1px solid rgba(255,255,255,0.08)',background:sbg}}>{fmtFull(subCombSOH)}</td>
                         <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,background:sbg}}>{fmtFull(subCombDRR)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(subCombDOC)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(subCombDOC,subCombSOH)}</td>
                         <td style={{padding:'7px 12px',textAlign:'right',color:DIM,fontFamily:MONO,fontSize:10,background:sbg}}>{fmtFull(Math.round(subProjDRR))}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderRight:'1px solid rgba(255,255,255,0.08)'}}>{PS(subFDOC)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderRight:'1px solid rgba(255,255,255,0.08)'}}>{PS(subFDOC,subCombSOH)}</td>
                         {td(sB2BSOH,true)}{td(sB2BGGN)}{td(sB2BBHW)}{td(sB2BBLR)}
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderLeft:'1px solid rgba(255,255,255,0.04)'}}>{PS(sB2BDOC)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdGGN)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdBHW)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdBLR)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderLeft:'1px solid rgba(255,255,255,0.04)'}}>{PS(sB2BDOC,sB2BSOH)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdGGN,sB2BGGN)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdBHW,sB2BBHW)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2BdBLR,sB2BBLR)}</td>
                         {td(sB2BDRR,true)}{td(sB2BdRGGN)}{td(sB2BdRBHW)}{td(sB2BdRBLR)}
                         <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,background:sbg,borderLeft:'1px solid rgba(255,255,255,0.08)'}}>{fmtFull(sB2CSOH)}</td>
                         {td(sB2CGGN)}{td(sB2CBHW)}{td(sB2CBLR)}
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderLeft:'1px solid rgba(255,255,255,0.04)'}}>{PS(sB2CDOC)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdGGN)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdBHW)}</td>
-                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdBLR)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg,borderLeft:'1px solid rgba(255,255,255,0.04)'}}>{PS(sB2CDOC,sB2CSOH)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdGGN,sB2CGGN)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdBHW,sB2CBHW)}</td>
+                        <td style={{padding:'7px 12px',textAlign:'right',background:sbg}}>{PS(sB2CdBLR,sB2CBLR)}</td>
                         {td(sB2CDRR,true)}{td(sB2CdRGGN)}{td(sB2CdRBHW)}{td(sB2CdRBLR)}
                       </tr>
                     );
@@ -448,20 +454,20 @@ export default function App() {
                         </td>
                         <td style={{padding:'8px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:11,fontWeight:700,borderLeft:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.02)'}}>{combSOH?fmtFull(combSOH):'—'}</td>
                         <td style={{padding:'8px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:11,fontWeight:700,background:'rgba(255,255,255,0.02)'}}>{combDRR?fmtFull(combDRR):'—'}</td>
-                        <td style={{padding:'8px 12px',textAlign:'right',background:'rgba(255,255,255,0.02)'}}><DocPill v={combDOC}/></td>
+                        <td style={{padding:'8px 12px',textAlign:'right',background:'rgba(255,255,255,0.02)'}}><DocPill v={combDOC} soh={combSOH}/></td>
                         <td style={{padding:'8px 12px',textAlign:'right',color:DIM,fontFamily:MONO,fontSize:11,background:'rgba(255,255,255,0.02)'}}>{projDRR?fmtFull(Math.round(projDRR)):'—'}</td>
-                        <td style={{padding:'8px 12px',textAlign:'right',background:'rgba(255,255,255,0.02)',borderRight:'1px solid rgba(255,255,255,0.08)'}}><DocPill v={fDOC}/></td>
+                        <td style={{padding:'8px 12px',textAlign:'right',background:'rgba(255,255,255,0.02)',borderRight:'1px solid rgba(255,255,255,0.08)'}}><DocPill v={fDOC} soh={combSOH}/></td>
                         {td(b?.totalSOH,true,'1px solid rgba(255,255,255,0.04)')}{td(b?.sohGGN)}{td(b?.sohBHW)}{td(b?.sohBLR)}
-                        <td style={{padding:'8px 10px',textAlign:'right',borderLeft:'1px solid rgba(255,255,255,0.04)'}}><DocPill v={b?.totalDOC}/></td>
-                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docGGN}/></td>
-                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docBHW}/></td>
-                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docBLR}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right',borderLeft:'1px solid rgba(255,255,255,0.04)'}}><DocPill v={b?.totalDOC} soh={b?.totalSOH||0}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docGGN} soh={b?.sohGGN||0}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docBHW} soh={b?.sohBHW||0}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={b?.docBLR} soh={b?.sohBLR||0}/></td>
                         {td(b?.totalDRR,true,'1px solid rgba(255,255,255,0.04)')}{td(b?.drrGGN)}{td(b?.drrBHW)}{td(b?.drrBLR)}
                         {td(c?.totalSOH,true,'1px solid rgba(255,255,255,0.08)')}{td(c?.sohGGN)}{td(c?.sohBHW)}{td(c?.sohBLR)}
-                        <td style={{padding:'8px 10px',textAlign:'right',borderLeft:'1px solid rgba(255,255,255,0.04)'}}><DocPill v={c?.totalDOC}/></td>
-                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docGGN}/></td>
-                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docBHW}/></td>
-                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docBLR}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right',borderLeft:'1px solid rgba(255,255,255,0.04)'}}><DocPill v={c?.totalDOC} soh={c?.totalSOH||0}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docGGN} soh={c?.sohGGN||0}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docBHW} soh={c?.sohBHW||0}/></td>
+                        <td style={{padding:'8px 10px',textAlign:'right'}}><DocPill v={c?.docBLR} soh={c?.sohBLR||0}/></td>
                         {td(c?.totalDRR,true,'1px solid rgba(255,255,255,0.04)')}{td(c?.drrGGN)}{td(c?.drrBHW)}{td(c?.drrBLR)}
                       </tr>
                     );
