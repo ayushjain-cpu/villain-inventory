@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 
 const BG      = '#f5f4f0';
 const BG2     = '#eeece7';
-const BORDER  = 'rgba(0,0,0,0.07)';
-const BORDER2 = 'rgba(0,0,0,0.08)';
-const TEXT    = '#1a1a2e';
-const TEXT2   = '#2d2d44';
-const MUTED   = '#8a8fa8';
-const DIM     = '#6b7080';
+const BORDER  = 'rgba(0,0,0,0.09)';
+const BORDER2 = 'rgba(0,0,0,0.10)';
+const TEXT    = '#111118';
+const TEXT2   = '#1e1e2e';
+const MUTED   = '#5a5f72';
+const DIM     = '#444855';
 const FONT    = "'DM Sans', sans-serif";
 const MONO    = 'monospace';
 
@@ -51,15 +51,15 @@ function DocPill({ v, soh }) {
 function Card({ label, value, sub, accent }) {
   return (
     <div style={{background:'#fff',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-      <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{label}</div>
+      <div style={{fontSize:10,color:MUTED,fontFamily:MONO,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:5,fontWeight:600}}>{label}</div>
       <div style={{fontSize:20,fontWeight:700,color:accent||TEXT,fontFamily:MONO}}>{value}</div>
-      {sub!==undefined && <div style={{fontSize:10,color:MUTED,marginTop:3}}>{sub}</div>}
+      {sub!==undefined && <div style={{fontSize:11,color:DIM,marginTop:3}}>{sub}</div>}
     </div>
   );
 }
 
 const SIZE_TABS = [
-  {id:'All',          label:'All',            emoji:'📦', color:'#e6edf3'},
+  {id:'All',          label:'All',            emoji:'📦', color:'#444855'},
   {id:'100ml',        label:'100ml',          emoji:'🟣', color:'#e879f9'},
   {id:'50ml',         label:'50ml',           emoji:'🟢', color:'#00c896'},
   {id:'20ml',         label:'20ml',           emoji:'🟡', color:'#f5a623'},
@@ -183,17 +183,17 @@ export default function App() {
   }
 
   const TH = ({label,col,right}) => (
-    <th onClick={()=>toggleSort(col)} style={{padding:'10px 12px',textAlign:right?'right':'left',color:sortCol===col?tab.color:MUTED,cursor:'pointer',userSelect:'none',fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',whiteSpace:'nowrap',borderBottom:`1px solid ${BORDER2}`,background:BG2,position:'sticky',top:22,zIndex:1,fontWeight:400}}>
+    <th onClick={()=>toggleSort(col)} style={{padding:'10px 12px',textAlign:right?'right':'left',color:sortCol===col?tab.color:DIM,cursor:'pointer',userSelect:'none',fontFamily:MONO,fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase',whiteSpace:'nowrap',borderBottom:`1px solid ${BORDER2}`,background:BG2,position:'sticky',top:22,zIndex:1,fontWeight:600}}>
       {label}{sortCol===col?(sortDir==='asc'?' ↑':' ↓'):''}
     </th>
   );
   const STH = ({label,col,left}) => (
-    <th onClick={()=>toggleSort(col)} style={{padding:'10px 12px',textAlign:'left',color:sortCol===col?tab.color:MUTED,cursor:'pointer',userSelect:'none',fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',whiteSpace:'nowrap',borderBottom:`1px solid ${BORDER2}`,borderRight:`1px solid ${BORDER2}`,background:BG2,position:'sticky',top:22,left,zIndex:3,fontWeight:400}}>
+    <th onClick={()=>toggleSort(col)} style={{padding:'10px 12px',textAlign:'left',color:sortCol===col?tab.color:DIM,cursor:'pointer',userSelect:'none',fontFamily:MONO,fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase',whiteSpace:'nowrap',borderBottom:`1px solid ${BORDER2}`,borderRight:`1px solid ${BORDER2}`,background:BG2,position:'sticky',top:22,left,zIndex:3,fontWeight:600}}>
       {label}{sortCol===col?(sortDir==='asc'?' ↑':' ↓'):''}
     </th>
   );
   const GH = ({label,cols,color,leftBorder}) => (
-    <th colSpan={cols} style={{padding:'5px 10px',textAlign:'center',fontFamily:MONO,fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase',color,borderBottom:`1px solid ${color}55`,background:BG,position:'sticky',top:0,zIndex:2,whiteSpace:'nowrap',borderLeft:leftBorder?`1px solid ${BORDER2}`:'none'}}>
+    <th colSpan={cols} style={{padding:'5px 10px',textAlign:'center',fontFamily:MONO,fontSize:10,letterSpacing:'0.10em',textTransform:'uppercase',color,borderBottom:`2px solid ${color}`,background:BG,position:'sticky',top:0,zIndex:2,whiteSpace:'nowrap',borderLeft:leftBorder?`1px solid ${BORDER2}`:'none',fontWeight:700}}>
       {label}
     </th>
   );
@@ -208,7 +208,7 @@ export default function App() {
         {/* WH cards */}
         <div style={{display:'flex',gap:8,marginBottom:12,flexShrink:0,flexWrap:'wrap'}}>
           <div style={{background:'#fff',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-            <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{sizeTab==='ASN'?'Total Inbound':'Recently Delivered'}</div>
+            <div style={{fontSize:10,color:MUTED,fontFamily:MONO,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:5,fontWeight:600}}>{sizeTab==='ASN'?'Total Inbound':'Recently Delivered'}</div>
             <div style={{fontSize:20,fontWeight:700,color:accentColor,fontFamily:MONO}}>{totalQty.toLocaleString('en-IN')}</div>
             <div style={{fontSize:10,color:MUTED,marginTop:3}}>{rows.length} lines · {new Set(rows.map(r=>r.style)).size} SKUs</div>
           </div>
@@ -216,7 +216,7 @@ export default function App() {
             const whRows=rows.filter(r=>r.wh===wh);
             return (
               <div key={wh} style={{background:'#fff',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-                <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:5}}>{wh}</div>
+                <div style={{fontSize:10,color:MUTED,fontFamily:MONO,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:5,fontWeight:600}}>{wh}</div>
                 <div style={{fontSize:20,fontWeight:700,color:accentColor,fontFamily:MONO}}>{whRows.reduce((s,r)=>s+r.qty,0).toLocaleString('en-IN')}</div>
                 <div style={{fontSize:10,color:MUTED,marginTop:3}}>{whRows.length} lines · {new Set(whRows.map(r=>r.style)).size} SKUs</div>
               </div>
@@ -227,7 +227,7 @@ export default function App() {
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10,flexShrink:0}}>
           <input value={asnSearch} onChange={e=>setAsnSearch(e.target.value)} placeholder="Search style..."
             style={{background:'#fff',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'7px 12px',color:TEXT,fontSize:13,outline:'none',fontFamily:FONT,width:220}}/>
-          <span style={{color:MUTED,fontSize:12}}>{filtered.length} / {rows.length} lines</span>
+          <span style={{color:DIM,fontSize:12,fontWeight:500}}>{filtered.length} / {rows.length} lines</span>
         </div>
         {/* Table */}
         <div style={{flex:1,overflow:'auto'}}>
@@ -235,10 +235,10 @@ export default function App() {
             <thead>
               <tr>
                 {['Style / SKU','Warehouse',dateLabel].map(h=>(
-                  <th key={h} style={{padding:'10px 14px',textAlign:'left',color:MUTED,fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1}}>{h}</th>
+                  <th key={h} style={{padding:'10px 14px',textAlign:'left',color:DIM,fontFamily:MONO,fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1,fontWeight:600}}>{h}</th>
                 ))}
-                {sizeTab==='ASN' && <th style={{padding:'10px 14px',textAlign:'left',color:MUTED,fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1}}>Status</th>}
-                <th style={{padding:'10px 14px',textAlign:'right',color:MUTED,fontFamily:MONO,fontSize:9,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1}}>Qty</th>
+                {sizeTab==='ASN' && <th style={{padding:'10px 14px',textAlign:'left',color:DIM,fontFamily:MONO,fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1,fontWeight:600}}>Status</th>}
+                <th style={{padding:'10px 14px',textAlign:'right',color:DIM,fontFamily:MONO,fontSize:10,letterSpacing:'0.08em',textTransform:'uppercase',borderBottom:`1px solid ${BORDER2}`,background:BG,position:'sticky',top:0,zIndex:1,fontWeight:600}}>Qty</th>
               </tr>
             </thead>
             <tbody>
@@ -340,13 +340,13 @@ export default function App() {
                   sub:critCnt>0?`⚠ ${critCnt} critical`:stockCnt>0?`⚠ ${stockCnt} stockout`:'all healthy'},
               ].map(c=>(
                 <div key={c.label} style={{background:'#fff',border:`1px solid ${BORDER2}`,borderRadius:10,padding:'10px 14px',flex:1,boxShadow:'0 1px 4px rgba(0,0,0,0.05)'}}>
-                  <div style={{fontSize:9,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:6}}>{c.label}</div>
+                  <div style={{fontSize:10,color:MUTED,fontFamily:MONO,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6,fontWeight:600}}>{c.label}</div>
                   <div style={{display:'flex',gap:14,alignItems:'flex-end',marginBottom:4}}>
-                    <div><div style={{fontSize:9,color:MUTED,fontFamily:MONO,marginBottom:2,letterSpacing:'0.08em'}}>B2B</div><div style={{fontSize:20,fontWeight:700,color:c.b2bColor,fontFamily:MONO,lineHeight:1}}>{c.b2bVal}</div></div>
+                    <div><div style={{fontSize:10,color:DIM,fontFamily:MONO,marginBottom:2,letterSpacing:'0.06em',fontWeight:600}}>B2B</div><div style={{fontSize:20,fontWeight:700,color:c.b2bColor,fontFamily:MONO,lineHeight:1}}>{c.b2bVal}</div></div>
                     <div style={{width:1,height:28,background:BORDER2,flexShrink:0}}/>
-                    <div><div style={{fontSize:9,color:MUTED,fontFamily:MONO,marginBottom:2,letterSpacing:'0.08em'}}>B2C</div><div style={{fontSize:20,fontWeight:700,color:c.b2cColor,fontFamily:MONO,lineHeight:1}}>{c.b2cVal}</div></div>
+                    <div><div style={{fontSize:10,color:DIM,fontFamily:MONO,marginBottom:2,letterSpacing:'0.06em',fontWeight:600}}>B2C</div><div style={{fontSize:20,fontWeight:700,color:c.b2cColor,fontFamily:MONO,lineHeight:1}}>{c.b2cVal}</div></div>
                   </div>
-                  <div style={{fontSize:10,color:c.label.includes('DOC')&&critCnt>0?'#ff4444':MUTED,marginTop:2}}>{c.sub}</div>
+                  <div style={{fontSize:11,color:c.label.includes('DOC')&&critCnt>0?'#d93025':DIM,marginTop:2}}>{c.sub}</div>
                 </div>
               ))}
             </div>
@@ -357,7 +357,7 @@ export default function App() {
             <div style={{padding:'0 20px 10px',flexShrink:0,display:'flex',alignItems:'center',gap:10}}>
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search style..."
                 style={{background:'#fff',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'7px 12px',color:TEXT,fontSize:13,outline:'none',fontFamily:FONT,width:220}}/>
-              <span style={{color:MUTED,fontSize:12}}>{visibleRows.length} / {merged.length} SKUs</span>
+              <span style={{color:DIM,fontSize:12,fontWeight:500}}>{visibleRows.length} / {merged.length} SKUs</span>
               <button onClick={downloadCSV} style={{marginLeft:'auto',background:'rgba(0,0,0,0.03)',border:`1px solid ${BORDER2}`,borderRadius:6,padding:'6px 14px',color:MUTED,fontSize:11,cursor:'pointer',fontFamily:FONT}}>↓ Export CSV</button>
             </div>
           )}
@@ -410,7 +410,7 @@ export default function App() {
                     const td=(v,bold)=><td style={{padding:'7px 12px',textAlign:'right',color:bold?TEXT:DIM,fontFamily:MONO,fontSize:10,fontWeight:bold?700:400,background:sbg}}>{v?fmtFull(v):'—'}</td>;
                     return (
                       <tr style={{borderBottom:'2px solid rgba(0,0,0,0.10)',background:sbg}}>
-                        <td style={{padding:'7px 12px',color:MUTED,fontFamily:MONO,fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',position:'sticky',left:0,zIndex:2,background:sbg,borderRight:'1px solid rgba(0,0,0,0.07)'}}>TOTAL</td>
+                        <td style={{padding:'7px 12px',color:DIM,fontFamily:MONO,fontSize:10,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',position:'sticky',left:0,zIndex:2,background:sbg,borderRight:'1px solid rgba(0,0,0,0.07)'}}>TOTAL</td>
                         <td style={{padding:'7px 10px',position:'sticky',left:180,zIndex:2,background:sbg,borderRight:'1px solid rgba(0,0,0,0.07)'}}/>
                         <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,borderLeft:'1px solid rgba(0,0,0,0.07)',background:sbg}}>{fmtFull(subCombSOH)}</td>
                         <td style={{padding:'7px 12px',textAlign:'right',color:TEXT,fontFamily:MONO,fontSize:10,fontWeight:700,background:sbg}}>{fmtFull(subCombDRR)}</td>
@@ -481,7 +481,7 @@ export default function App() {
           {!isASNTab && (
             <div style={{display:'flex',gap:14,padding:'8px 20px 12px',flexWrap:'wrap',flexShrink:0}}>
               {[['≤7d Critical','#ff4444'],['≤15d Low','#f5a623'],['≤30d','#f5c518'],['≤60d Healthy','#00c896'],['>60d Overstock','#7c5cfc']].map(([l,c])=>(
-                <div key={l} style={{display:'flex',alignItems:'center',gap:5,fontFamily:MONO,fontSize:9,color:MUTED}}>
+                <div key={l} style={{display:'flex',alignItems:'center',gap:5,fontFamily:MONO,fontSize:10,color:DIM,fontWeight:500}}>
                   <div style={{width:6,height:6,borderRadius:'50%',background:c}}/>{l}
                 </div>
               ))}
@@ -491,16 +491,16 @@ export default function App() {
 
         {/* Chat panel */}
         <div style={{width:320,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-          <div style={{padding:'12px 16px',borderBottom:`1px solid ${BORDER}`,fontSize:10,color:MUTED,fontFamily:MONO,letterSpacing:'0.1em'}}>
+          <div style={{padding:'12px 16px',borderBottom:`1px solid ${BORDER}`,fontSize:11,color:DIM,fontFamily:MONO,letterSpacing:'0.08em',fontWeight:700}}>
             💬 MEETING ASSISTANT
           </div>
           <div style={{flex:1,overflowY:'auto',padding:'14px 16px',display:'flex',flexDirection:'column',gap:10}}>
             {chat.length===0&&(
               <>
-                <div style={{fontSize:12,color:MUTED,lineHeight:1.6}}>Ask me anything about B2B or B2C inventory during your review.</div>
+                <div style={{fontSize:13,color:DIM,lineHeight:1.6}}>Ask me anything about B2B or B2C inventory during your review.</div>
                 <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
                   {['Critical SKUs?','Which 100ml are low DOC?','B2C stockout risk?','Gift pack DOC summary?'].map(q=>(
-                    <div key={q} onClick={()=>setInput(q)} style={{fontSize:12,color:MUTED,cursor:'pointer',padding:'8px 12px',borderRadius:7,border:`1px solid ${BORDER2}`,transition:'all 0.15s',background:'rgba(0,0,0,0.02)'}}
+                    <div key={q} onClick={()=>setInput(q)} style={{fontSize:12,color:DIM,cursor:'pointer',padding:'8px 12px',borderRadius:7,border:`1px solid ${BORDER2}`,transition:'all 0.15s',background:'rgba(0,0,0,0.02)'}}
                       onMouseEnter={e=>{e.currentTarget.style.borderColor=tab.color;e.currentTarget.style.color=tab.color;}}
                       onMouseLeave={e=>{e.currentTarget.style.borderColor=BORDER2;e.currentTarget.style.color=MUTED;}}>{q}</div>
                   ))}
